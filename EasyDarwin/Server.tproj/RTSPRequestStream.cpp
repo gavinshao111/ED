@@ -224,7 +224,7 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                         if (0 != rc)
                             fprintf(stderr, "[WARN] parseReq error, return code: %d\n\n", rc);
                         else {
-                            fprintf(stderr, "%.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                            fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                             if (!videoReqInfo.ignore) {
                                     if(!IsUrlExistingInSessionMap(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst)){
                                         fprintf(stderr, "[DEBUG] %.*s is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, OSThread::GetCurrentThreadID());

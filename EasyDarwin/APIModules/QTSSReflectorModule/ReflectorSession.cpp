@@ -25,6 +25,10 @@
 /*
 	File:       ReflectorSession.cpp
 	Contains:   Implementation of object defined in ReflectorSession.h.
+ 
+ * Gavin's change:
+ * in ReflectorSession::RemoveOutput, dected that there is no APP in session, 
+ * generate url and call StopPushMQ.
 */
 
 #include "ReflectorSession.h"
@@ -42,11 +46,16 @@
 #include <unistd.h>
 #endif
 
+#include "mainProcess.h"
+
 #if DEBUG
 #define REFLECTOR_SESSION_DEBUGGING 0
 #else
 #define REFLECTOR_SESSION_DEBUGGING 0
 #endif
+
+const char *strDefaultIp = "120.27.188.84";
+const int defaultPort = 8888;
 
 FileDeleter::FileDeleter(StrPtrLen* inSDPPath)
 {
@@ -407,6 +416,34 @@ void    ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClien
 			(void)theModule->CallDispatch(Easy_CMSFreeStream_Role, &theParams);
 			break;
 		}
+                
+
+                // fStreamName is "realtime/$1234/1/realtime"
+                // we need splice tobe ip:port/realtime/$1234/1/realtim.sdp
+                const char *ip;                
+                StrPtrLen* SocketAIP = ((ReflectorSocket*)fStreamArray[0]->GetSocketPair()->GetSocketA())->GetLocalAddrStr();
+                StrPtrLen* SocketBIP = ((ReflectorSocket*)fStreamArray[0]->GetSocketPair()->GetSocketB())->GetLocalAddrStr();             
+                if (SocketAIP->Equal("0.0.0.0"))
+                    if (SocketBIP->Equal("0.0.0.0"))
+                        ip = strDefaultIp;
+                    else
+                        ip = SocketBIP->Ptr;
+                else
+                    ip = SocketAIP->Ptr;
+                
+                char* urlWithoutRTSP = new char[strlen(ip) + 20 + strlen(fStreamName) + 1];
+                memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fStreamName) + 1);
+                sprintf(urlWithoutRTSP, "%s:%d/%s.sdp", ip, defaultPort, fStreamName);
+                
+                int rc = sendStopPushMq(urlWithoutRTSP);
+                delete[] urlWithoutRTSP;                
+
+                DateBuffer theDate;
+		DateTranslator::UpdateDateBuffer(&theDate, 0);
+                if (0 == rc)
+                    fprintf(stderr, "[INFO] %s: No APP, StopPush MQ sent. %s\n\n", fStreamName, theDate.GetDateBuffer());
+                else
+                    fprintf(stderr, "[WARN] %s: No APP, sendStopPushMq fail, return code: %d %s\n\n", fStreamName, rc, theDate.GetDateBuffer());
 	}
 }
 

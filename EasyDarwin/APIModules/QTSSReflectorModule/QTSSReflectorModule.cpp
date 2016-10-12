@@ -25,13 +25,12 @@
 /*
 	File:       QTSSReflectorModule.cpp
 	Contains:   Implementation of QTSSReflectorModule class.
-*/
-
-/*
+ * 
  * Gavin's change:
- * #include "GetSession.h"
- * when push arrived or stop, add debug info.
+ * include "GetSession.h"
+ * when push arrived or stop, add debug info in FindOrCreateSession
  * implementation of IsUrlExistingInSessionMap
+ 
  */
 
 
@@ -1451,7 +1450,7 @@ ReflectorSession* FindOrCreateSession(StrPtrLen* inPath, QTSS_StandardRTSP_Param
                 if (isPush) {
                     DateBuffer theDate;                        
                     DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
-                    fprintf(stderr, "******** Push to %s created. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
+                    fprintf(stderr, "[INFO] %s: Push created. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
                 }
 
 		// unless we do this, the refcount won't increment (and we'll delete the session prematurely
@@ -2162,7 +2161,7 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 #ifdef REFLECTORSESSION_DEBUG
 				qtss_printf("QTSSReflectorModule.cpp:RemoveOutput UnRegister and delete session =%p refcount=%"   _U32BITARG_   "\n", theSessionRef, theSessionRef->GetRefCount());
 #endif
-				fprintf(stderr, "******** Push to %s stopped.\n\n", theSessionRef->GetString()->Ptr);
+				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", theSessionRef->GetString()->Ptr);
                                 sSessionMap->UnRegister(theSessionRef);
 				delete inSession;
 			}

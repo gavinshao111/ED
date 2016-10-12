@@ -28,7 +28,9 @@
 	 Contains:   Implementation of class defined in RTSPRequestInterface.h
 
 
-
+  *     Gavin's change:
+  *     when ED send DESC:404, it will call RTSPRequestInterface::WriteStandardHeaders
+  *     generate url and call StopPushMQ
 
  */
 
@@ -50,6 +52,8 @@
 #include "QTSSDataConverter.h"
 #include "OSArrayObjectDeleter.h"
 #include "QTSServerInterface.h"
+
+#include "mainProcess.h"
 
 char        RTSPRequestInterface::sPremadeHeader[kStaticHeaderSizeInBytes];
 StrPtrLen   RTSPRequestInterface::sPremadeHeaderPtr(sPremadeHeader, kStaticHeaderSizeInBytes);
@@ -605,6 +609,24 @@ void RTSPRequestInterface::WriteStandardHeaders()
 			fOutputStream->PutEOL();
 		}
 		AppendHeader(qtssCSeqHeader, fHeaderDictionary.GetValue(qtssCSeqHeader));
+
+                // if car has not push before APP request timeout, send a StopMQ to car anyway.
+                if(fStatus == qtssClientNotFound) {
+                    char *ip = GetSession()->GetSocket()->GetLocalAddrStr()->Ptr;
+                    int port = (int)GetSession()->GetSocket()->GetLocalPort();
+                    char* urlWithoutRTSP = new char[strlen(ip) + 20 + strlen(fFilePath) + 1];
+                    memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fFilePath) + 1);
+                    sprintf(urlWithoutRTSP, "%s:%d%s", ip, port, fFilePath);
+
+                    fprintf(stderr, "[INFO] %s: Haven't receive Push, APP will disconnect.\n", fFilePath);
+                    int rc = sendStopPushMq(urlWithoutRTSP);
+                    DateBuffer theDate;
+                    DateTranslator::UpdateDateBuffer(&theDate, 0);
+                    if (0 == rc)
+                        fprintf(stderr, "[INFO] StopPush MQ sent. %s\n\n", theDate.GetDateBuffer());
+                    else
+                        fprintf(stderr, "[WARN] sendStopPushMq fail, return code: %d %s\n\n", rc, theDate.GetDateBuffer());    
+                }  
 	}
 
 	//append sessionID header
