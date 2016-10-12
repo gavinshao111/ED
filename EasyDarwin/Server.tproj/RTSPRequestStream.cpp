@@ -38,9 +38,13 @@
 #include "base64.h"
 #include "OS.h"
 
+#include "mainProcess.h"
 #include <errno.h>
 
 #define READ_DEBUGGING 0
+const char *strCarUserAgent = "LeapMotor Push v1.0";
+const char *strOPTION = "OPTION";
+const int timeToWait = 4;
 
 RTSPRequestStream::RTSPRequestStream(TCPSocket* sock)
 	: fSocket(sock),
@@ -182,8 +186,6 @@ QTSS_Error RTSPRequestStream::ReadRequest()
 			DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
 			qtss_printf("\n\n#C->S:\n#time: ms=%"   _U32BITARG_   " date=%s\n", (UInt32)OS::StartTimeMilli_Int(), theDate.GetDateBuffer());
 
-			bool IsAPPOption = false;
-			
 			if (fSocket != NULL)
 			{
 				UInt16 serverPort = fSocket->GetLocalPort();
@@ -207,18 +209,30 @@ QTSS_Error RTSPRequestStream::ReadRequest()
 				{
 					qtss_printf("#client: ip=NULL port=%u\n", clientPort);
 				}
-				if ((*(fRequest.Ptr) == 'O') && (0 == memcmp(theRemoteAddrStr->Ptr, "10.34.16.76", 11)))
-					IsAPPOption = true;
 
 			}
 
 			StrPtrLen str(fRequest);
 			str.PrintStrEOL("\n\r\n", "\n");// print the request but stop on \n\r\n and add a \n afterwards.
 			
-			if (IsAPPOption){
-				qtss_printf("************************Sleeping...\n\n\n");
+			
+                        videoReqInfoType videoReqInfo={0};
+
+                        int rc = parseReq(fRequest.Ptr, &videoReqInfo, false);
+			DateTranslator::UpdateDateBuffer(&theDate, 0);
+                        if (0 != rc)
+                            fprintf(stderr, "[WARN] parseReq error, return code: %d\n\n", rc);
+                        else {
+                            fprintf(stderr, "%.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                            if (!videoReqInfo.ignore) {
 				sleep(4);
+                            }
 			}
+
+
+
+
+
 		}
 
 		//use a StringParser object to search for a double EOL, which signifies the end of
