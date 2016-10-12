@@ -39,6 +39,7 @@
 #include "OS.h"
 
 #include "mainProcess.h"
+#include "GetSession.h"
 #include <errno.h>
 
 #define READ_DEBUGGING 0
@@ -225,7 +226,18 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                         else {
                             fprintf(stderr, "%.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                             if (!videoReqInfo.ignore) {
-				sleep(4);
+                                    if(!IsUrlExistingInSessionMap(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst)){
+                                        fprintf(stderr, "[DEBUG] %.*s is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, OSThread::GetCurrentThreadID());
+#if 0
+                                        int rc2 = waitForPush(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, timeToWait);
+                                        if (-1 == rc2)
+                                            fprintf(stderr, "[WARN] waitForPush for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
+                                        else if(-2 == rc2)
+                                            fprintf(stderr, "[INFO] waitForPush for %.*s time out (%ds).\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, timeToWait);
+#else
+                                        sleep(4);
+#endif                                        
+                                    }
                             }
 			}
 

@@ -27,6 +27,14 @@
 	Contains:   Implementation of QTSSReflectorModule class.
 */
 
+/*
+ * Gavin's change:
+ * #include "GetSession.h"
+ * when push arrived or stop, add debug info.
+ * implementation of IsUrlExistingInSessionMap
+ */
+
+
 #include "QTSServerInterface.h"
 #include "QTSSReflectorModule.h"
 #include "QTSSModuleUtils.h"
@@ -50,6 +58,8 @@
 #ifndef __Win32__
 #include <unistd.h>
 #endif
+
+#include "GetSession.h"
 
 #define REFLECTORSESSION_DEBUG 1
 
@@ -1438,6 +1448,12 @@ ReflectorSession* FindOrCreateSession(StrPtrLen* inPath, QTSS_StandardRTSP_Param
 		theErr = sSessionMap->Register(theSession->GetRef());
 		Assert(theErr == QTSS_NoErr);
 
+                if (isPush) {
+                    DateBuffer theDate;                        
+                    DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
+                    fprintf(stderr, "******** Push to %s created. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
+                }
+
 		// unless we do this, the refcount won't increment (and we'll delete the session prematurely
 		//if (!isPush)
 		{
@@ -2146,7 +2162,8 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 #ifdef REFLECTORSESSION_DEBUG
 				qtss_printf("QTSSReflectorModule.cpp:RemoveOutput UnRegister and delete session =%p refcount=%"   _U32BITARG_   "\n", theSessionRef, theSessionRef->GetRefCount());
 #endif
-				sSessionMap->UnRegister(theSessionRef);
+				fprintf(stderr, "******** Push to %s stopped.\n\n", theSessionRef->GetString()->Ptr);
+                                sSessionMap->UnRegister(theSessionRef);
 				delete inSession;
 			}
 		}
@@ -2333,4 +2350,19 @@ Bool16 IsAbsolutePath(StrPtrLen *inPathPtr)
 		return true;
 
 	return false;
+}
+
+bool IsUrlExistingInSessionMap(const char *fullFileName, int length)
+{
+    // we need str.Prt = "./Movies/realtime/$1234/1/realtime.sdp".
+    StrPtrLen inPath;
+    inPath.Len = 9 + length;
+    inPath.Ptr = NEW char[inPath.Len + 1];										
+    memset(inPath.Ptr, 0, inPath.Len + 1);
+    memcpy(inPath.Ptr, "./Movies/", 9);
+    memcpy(inPath.Ptr+9, fullFileName, length);
+    
+    bool rc =  sSessionMap->IsKeyExistingInTable(&inPath);
+    inPath.Delete();
+    return rc;
 }
