@@ -1,0 +1,6 @@
+原仓库为 https://github.com/gavinshao111/EasyDarwin
+
+在原仓库测试时发现个问题:
+In local env, there is a problem, if app is vlc, ED will process vlc's DESC req first then process car's setup, which result ED return 404 then open fail. But this problem only existing in local env && app is vlc.
+
+将代码回滚后问题还在，考虑到本地文件的影响，所以干脆新建个仓库重新开始，一边测试一边merge。后来问题又出现，部署到其他平台或者用ios播放都没有这个问题，于是不管这个问题。废弃原仓库，在本仓库继续开发。
