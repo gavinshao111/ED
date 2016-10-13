@@ -27,10 +27,9 @@
 	Contains:   Implementation of QTSSReflectorModule class.
  * 
  * Gavin's change:
- * include "GetSession.h"
- * when push arrived or stop, add debug info in FindOrCreateSession
+ * in FindOrCreateSession, when push arrived add output.
+ * in RemoveOutputor, when push stop, add output then call cleanCV.
  * implementation of IsUrlExistingInSessionMap
- 
  */
 
 
@@ -59,6 +58,7 @@
 #endif
 
 #include "GetSession.h"
+#include "cCondVB.h"
 
 #define REFLECTORSESSION_DEBUG 1
 
@@ -1450,7 +1450,8 @@ ReflectorSession* FindOrCreateSession(StrPtrLen* inPath, QTSS_StandardRTSP_Param
                 if (isPush) {
                     DateBuffer theDate;                        
                     DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
-                    fprintf(stderr, "[INFO] %s: Push created. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
+                    // theSession->GetSessionName() is like "realtime/$1234/1/realtime"
+                    fprintf(stderr, "[INFO] %s.sdp: Push established. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
                 }
 
 		// unless we do this, the refcount won't increment (and we'll delete the session prematurely
@@ -2161,7 +2162,11 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 #ifdef REFLECTORSESSION_DEBUG
 				qtss_printf("QTSSReflectorModule.cpp:RemoveOutput UnRegister and delete session =%p refcount=%"   _U32BITARG_   "\n", theSessionRef, theSessionRef->GetRefCount());
 #endif
-				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", theSessionRef->GetString()->Ptr);
+                                // theSessionRef->GetString()->Ptr is like "./Movies/realtime/$1234/1/realtime.sdp"
+				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));
+                                if (0 != cleanCV(theSessionRef->GetString()->Ptr + strlen("./Movies/"), 0))
+                                    fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));
+                                
                                 sSessionMap->UnRegister(theSessionRef);
 				delete inSession;
 			}

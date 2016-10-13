@@ -34,9 +34,11 @@
 				 multithreaded environment.
 
 
-
+ * Gavin's change:
+ * add public OSRefTable::IsKeyExistingInTable
 
  */
+
 
 #ifndef _OSREF_H_
 #define _OSREF_H_
@@ -100,7 +102,7 @@ private:
 	//key
 	StrPtrLen   fString;
 
-	//refcounting
+	//当有app加入播放的时候，调用refc++
 	UInt32  fRefCount;
 #if DEBUG
 	Bool16  fInATable;
@@ -233,6 +235,11 @@ public:
 
 	UInt32      GetNumRefsInTable() { UInt64 result = fTable.GetNumEntries(); Assert(result < kUInt32_Max); return (UInt32)result; }
 
+        /*
+        * inUniqueID is like "./Movies/realtime/$1234/1/realtime.sdp"
+        */
+        bool IsKeyExistingInTable(StrPtrLen* inUniqueID);
+        
 private:
 
 

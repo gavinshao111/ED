@@ -19,7 +19,7 @@ extern "C"{
 
 #define MQTTCLIENT_PERSISTENCE_NONE 1
 #define URLERR if ('\0' == *(req+i+3)){fprintf(stderr, "URL Format error.\n");return 9;}
-#define AURLERR if ('\0' == *(areq+i+3)){fprintf(stderr, "URL Format error.\n");return 9;}
+#define AURLERR if ('\0' == *(aVideoReqInfo->req+i+3)){fprintf(stderr, "URL Format error.\n");return 9;}
 #define PRINTERR(ERRTYPE) fprintf(stderr, "%s format error:\n%s\n", (ERRTYPE), req);return 10;
 //MQ
 const char *strClientIdForMQ = "EasyDarwin";
@@ -52,26 +52,26 @@ int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool start
         if('\0' == *(areq+i))
             return -1;
     aVideoReqInfo->req = areq+i;
-
+    i = 0;
     if(!startFromIp) {
-        if ('O' != *(areq+i) && 'o' != *(areq+i)){
+        if ('O' != *(aVideoReqInfo->req+i) && 'o' != *(aVideoReqInfo->req+i)){
             aVideoReqInfo->ignore = true;
             goto getUserAgentAndRet;
         }
 
         // step over "OPTION", point to next space.
-        for(;' ' != *(areq+i); i++)
-            if('\0' == *(areq+i))
+        for(;' ' != *(aVideoReqInfo->req+i); i++)
+            if('\0' == *(aVideoReqInfo->req+i))
                 return -1;       
     
         aVideoReqInfo->urlOfst = ++i;
-        if (*(areq+i) != 'r' ||
-                *(areq+ ++i) != 't' ||
-                *(areq+ ++i) != 's' ||
-                *(areq+ ++i) != 'p' ||
-                *(areq+ ++i) != ':' ||
-                *(areq+ ++i) != '/' ||
-                *(areq+ ++i) != '/')
+        if (*(aVideoReqInfo->req+i) != 'r' ||
+                *(aVideoReqInfo->req+ ++i) != 't' ||
+                *(aVideoReqInfo->req+ ++i) != 's' ||
+                *(aVideoReqInfo->req+ ++i) != 'p' ||
+                *(aVideoReqInfo->req+ ++i) != ':' ||
+                *(aVideoReqInfo->req+ ++i) != '/' ||
+                *(aVideoReqInfo->req+ ++i) != '/')
             //PRINTERR("RTSP")
             return -2;
     
@@ -79,19 +79,19 @@ int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool start
     }
     aVideoReqInfo->ipOfst = i;
     
-    for (; ':' != *(areq+i); i++){AURLERR}
+    for (; ':' != *(aVideoReqInfo->req+i); i++){AURLERR}
     aVideoReqInfo->portOfst = ++i;
     
     for (;; i++) {
-        if ('\0' == *(areq+i)){
+        if ('\0' == *(aVideoReqInfo->req+i)){
             return -4;
         }
-        if (' ' == *(areq+i)) {   // for case 4
+        if (' ' == *(aVideoReqInfo->req+i)) {   // for case 4
             aVideoReqInfo->ignore = true;
             goto getUserAgentAndRet;           
         }
-        else if ('/' == *(areq+i)) {
-            if (' ' == *(areq+ ++i)){   // for case 3
+        else if ('/' == *(aVideoReqInfo->req+i)) {
+            if (' ' == *(aVideoReqInfo->req+ ++i)){   // for case 3
                 aVideoReqInfo->ignore = true;
                 goto getUserAgentAndRet;
             }
@@ -102,16 +102,16 @@ int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool start
     if (!startFromIp) {
         j = i;
         // step over "*.*", point to next space.
-        for(; ' ' != *(areq+j); j++){
-            if ('\0' == *(areq+j)){
+        for(; ' ' != *(aVideoReqInfo->req+j); j++){
+            if ('\0' == *(aVideoReqInfo->req+j)){
                 return -4;
             }    
         }
 
-        if ('p' != *(areq+ --j) ||
-            'd' != *(areq+ --j) ||
-            's' != *(areq+ --j) ||
-            '.' != *(areq+ --j)) {
+        if ('p' != *(aVideoReqInfo->req+ --j) ||
+            'd' != *(aVideoReqInfo->req+ --j) ||
+            's' != *(aVideoReqInfo->req+ --j) ||
+            '.' != *(aVideoReqInfo->req+ --j)) {
             aVideoReqInfo->ignore = true;
             goto getUserAgentAndRet;    
         }
@@ -119,57 +119,57 @@ int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool start
     
     aVideoReqInfo->realOrRecFlagOfst = i;    
     
-    for (; '/' != *(areq+i); i++){AURLERR}
-    if ('$' != *(areq+ ++i)) {
+    for (; '/' != *(aVideoReqInfo->req+i); i++){AURLERR}
+    if ('$' != *(aVideoReqInfo->req+ ++i)) {
         //PRINTERR("ClientId")
         return -12;
     }
 
     aVideoReqInfo->clientIdOfst = ++i;
     
-    for (; '/' != *(areq+i); i++){AURLERR}
-    if ('0' != *(areq+ ++i) && '1' != *(areq+i)) {
+    for (; '/' != *(aVideoReqInfo->req+i); i++){AURLERR}
+    if ('0' != *(aVideoReqInfo->req+ ++i) && '1' != *(aVideoReqInfo->req+i)) {
         //PRINTERR("VideoType")
         return -13;
     }
     aVideoReqInfo->videoTypeOfst = i;
     
-    if ('/' != *(areq+ ++i)) {
+    if ('/' != *(aVideoReqInfo->req+ ++i)) {
         //PRINTERR("FileName")
         return -14;
     }
 
     aVideoReqInfo->fileNameOfst = ++i;
 
-    for (; '\0' != *(areq+i) && ' ' != *(areq+i) && '/' != *(areq+i); i++);
+    for (; '\0' != *(aVideoReqInfo->req+i) && ' ' != *(aVideoReqInfo->req+i) && '/' != *(aVideoReqInfo->req+i); i++);
     aVideoReqInfo->fileNameEndOfst = i;
 
 
 getUserAgentAndRet:
     for(;;i++){
-        if(0 == *(areq+i)){	//some req doesn't contain userAgent, userAgentOfst set to 0.
+        if(0 == *(aVideoReqInfo->req+i)){	//some req doesn't contain userAgent, userAgentOfst set to 0.
             aVideoReqInfo->ignore = true;
             aVideoReqInfo->userAgentOfst = 0;
             return 0;
         }
-        else if (*(areq+i) != 'U' ||
-            *(areq+ ++i) != 's' ||
-            *(areq+ ++i) != 'e' ||
-            *(areq+ ++i) != 'r' ||
-            *(areq+ ++i) != '-' ||
-            *(areq+ ++i) != 'A' ||
-            *(areq+ ++i) != 'g' ||
-            *(areq+ ++i) != 'e' ||
-            *(areq+ ++i) != 'n' ||
-            *(areq+ ++i) != 't' ||
-            *(areq+ ++i) != ':')
+        else if (*(aVideoReqInfo->req+i) != 'U' ||
+            *(aVideoReqInfo->req+ ++i) != 's' ||
+            *(aVideoReqInfo->req+ ++i) != 'e' ||
+            *(aVideoReqInfo->req+ ++i) != 'r' ||
+            *(aVideoReqInfo->req+ ++i) != '-' ||
+            *(aVideoReqInfo->req+ ++i) != 'A' ||
+            *(aVideoReqInfo->req+ ++i) != 'g' ||
+            *(aVideoReqInfo->req+ ++i) != 'e' ||
+            *(aVideoReqInfo->req+ ++i) != 'n' ||
+            *(aVideoReqInfo->req+ ++i) != 't' ||
+            *(aVideoReqInfo->req+ ++i) != ':')
             continue;
         else    //get User-Agent:
             break;        
     }
-    for (i++ ; ' ' == *(areq+i); i++);
+    for (i++ ; ' ' == *(aVideoReqInfo->req+i); i++);
     aVideoReqInfo->userAgentOfst = i;
-    if (false == aVideoReqInfo->ignore && 0 == memcmp(areq+i, strCarUserAgent, 9) )
+    if (false == aVideoReqInfo->ignore && 0 == memcmp(aVideoReqInfo->req+i, strCarUserAgent, 9) )
         aVideoReqInfo->ignore = true;
     
     return 0;

@@ -30,7 +30,7 @@
 
   *     Gavin's change:
   *     when ED send DESC:404, it will call RTSPRequestInterface::WriteStandardHeaders
-  *     generate url and call StopPushMQ
+  *     generate url and call StopPushMQ and cleanCV
 
  */
 
@@ -54,6 +54,7 @@
 #include "QTSServerInterface.h"
 
 #include "mainProcess.h"
+#include "cCondVB.h"
 
 char        RTSPRequestInterface::sPremadeHeader[kStaticHeaderSizeInBytes];
 StrPtrLen   RTSPRequestInterface::sPremadeHeaderPtr(sPremadeHeader, kStaticHeaderSizeInBytes);
@@ -614,18 +615,22 @@ void RTSPRequestInterface::WriteStandardHeaders()
                 if(fStatus == qtssClientNotFound) {
                     char *ip = GetSession()->GetSocket()->GetLocalAddrStr()->Ptr;
                     int port = (int)GetSession()->GetSocket()->GetLocalPort();
+                    
+                    // fFilePath is like "/realtime/$1234/1/realtime.sdp"
                     char* urlWithoutRTSP = new char[strlen(ip) + 20 + strlen(fFilePath) + 1];
                     memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fFilePath) + 1);
                     sprintf(urlWithoutRTSP, "%s:%d%s", ip, port, fFilePath);
 
-                    fprintf(stderr, "[INFO] %s: Haven't receive Push, APP will disconnect.\n", fFilePath);
+                    fprintf(stderr, "[INFO] %s: Haven't receive Push, APP will disconnect.\n", fFilePath+1);
                     int rc = sendStopPushMq(urlWithoutRTSP);
                     DateBuffer theDate;
                     DateTranslator::UpdateDateBuffer(&theDate, 0);
                     if (0 == rc)
-                        fprintf(stderr, "[INFO] StopPush MQ sent. %s\n\n", theDate.GetDateBuffer());
+                        fprintf(stderr, "[INFO] %s: StopPush MQ sent. %s\n\n", fFilePath+1, theDate.GetDateBuffer());
                     else
-                        fprintf(stderr, "[WARN] sendStopPushMq fail, return code: %d %s\n\n", rc, theDate.GetDateBuffer());    
+                        fprintf(stderr, "[WARN] %s: sendStopPushMq fail, return code: %d %s\n\n", fFilePath+1, rc, theDate.GetDateBuffer());    
+                    if (0 != cleanCV(fFilePath+1, 0))
+                        fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", fFilePath+1);
                 }  
 	}
 

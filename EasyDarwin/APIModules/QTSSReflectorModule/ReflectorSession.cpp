@@ -431,6 +431,7 @@ void    ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClien
                 else
                     ip = SocketAIP->Ptr;
                 
+                // fStreamName is like "realtime/$1234/1/realtime"
                 char* urlWithoutRTSP = new char[strlen(ip) + 20 + strlen(fStreamName) + 1];
                 memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fStreamName) + 1);
                 sprintf(urlWithoutRTSP, "%s:%d/%s.sdp", ip, defaultPort, fStreamName);
@@ -441,9 +442,9 @@ void    ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClien
                 DateBuffer theDate;
 		DateTranslator::UpdateDateBuffer(&theDate, 0);
                 if (0 == rc)
-                    fprintf(stderr, "[INFO] %s: No APP, StopPush MQ sent. %s\n\n", fStreamName, theDate.GetDateBuffer());
+                    fprintf(stderr, "[INFO] %s.sdp: No APP, StopPush MQ sent. %s\n\n", fStreamName, theDate.GetDateBuffer());
                 else
-                    fprintf(stderr, "[WARN] %s: No APP, sendStopPushMq fail, return code: %d %s\n\n", fStreamName, rc, theDate.GetDateBuffer());
+                    fprintf(stderr, "[WARN] %s.sdp: No APP, sendStopPushMq fail, return code: %d %s\n\n", fStreamName, rc, theDate.GetDateBuffer());
 	}
 }
 

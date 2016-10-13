@@ -40,12 +40,13 @@
 
 #include "mainProcess.h"
 #include "GetSession.h"
+#include "cCondVB.h"
 #include <errno.h>
 
 #define READ_DEBUGGING 0
 const char *strCarUserAgent = "LeapMotor Push v1.0";
 const char *strOPTION = "OPTION";
-const int timeToWait = 4;
+const int timeToWait = 8;
 
 RTSPRequestStream::RTSPRequestStream(TCPSocket* sock)
 	: fSocket(sock),
@@ -226,25 +227,44 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                         else {
                             fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                             if (!videoReqInfo.ignore) {
+                                int rc2 = sendStartPushMq(&videoReqInfo);
+                                if (0 == rc2){
+                                    DateTranslator::UpdateDateBuffer(&theDate, 0);
+                                    fprintf(stderr, "[INFO] %.*s: Start push MQ sent. %s TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+
                                     if(!IsUrlExistingInSessionMap(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst)){
-                                        fprintf(stderr, "[DEBUG] %.*s is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, OSThread::GetCurrentThreadID());
-#if 0
-                                        int rc2 = waitForPush(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, timeToWait);
-                                        if (-1 == rc2)
-                                            fprintf(stderr, "[WARN] waitForPush for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
-                                        else if(-2 == rc2)
-                                            fprintf(stderr, "[INFO] waitForPush for %.*s time out (%ds).\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, timeToWait);
+                                    //if(true){
+                                        fprintf(stderr, "[DEBUG] %.*s: path is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, OSThread::GetCurrentThreadID());
+#if 1
+                                        int timeToWait = 8;
+                                        int rc3 = waitForPush(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, timeToWait);
+                                        if (-1 == rc3)
+                                            fprintf(stderr, "[WARN] %.*s: waitForPush error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
+                                        else if(-2 == rc3)
+                                            fprintf(stderr, "[INFO] %.*s: waitForPush time out (%ds).\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, timeToWait);
+                                        else
+                                            //sleep(1);
+                                            usleep(1000*100);
 #else
                                         sleep(4);
 #endif                                        
                                     }
+                                    else
+                                        fprintf(stderr, "[DEBUG] %.*s is ExistingInSessionMap.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);                             
+                                }                                
+                                else {
+                                    fprintf(stderr, "[WARN] sendStartPushMq for %.*s fail, return code: %d %s TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, rc2, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                                }
                             }
+#if 1
+                            else if (0 != videoReqInfo.userAgentOfst && 
+                                     0 == memcmp(videoReqInfo.req + videoReqInfo.userAgentOfst, strCarUserAgent, 9) &&
+                                     0 == strncasecmp(videoReqInfo.req, strOPTION, strlen(strOPTION)))
+                                // it is push from Car, so notify APP wakeup.
+                                if (0 != notifyAppThePsuhIsArrived(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst))
+                                    fprintf(stderr, "[WARN] notifyAppThePsuhIsArrived for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
+#endif
 			}
-
-
-
-
-
 		}
 
 		//use a StringParser object to search for a double EOL, which signifies the end of
