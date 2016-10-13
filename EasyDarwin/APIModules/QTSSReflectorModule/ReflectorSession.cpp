@@ -54,6 +54,7 @@
 #define REFLECTOR_SESSION_DEBUGGING 0
 #endif
 
+extern const int timeOutForSendMQ;
 const char *strDefaultIp = "120.27.188.84";
 const int defaultPort = 8888;
 
@@ -436,7 +437,7 @@ void    ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClien
                 memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fStreamName) + 1);
                 sprintf(urlWithoutRTSP, "%s:%d/%s.sdp", ip, defaultPort, fStreamName);
                 
-                int rc = sendStopPushMq(urlWithoutRTSP);
+                int rc = sendStopPushMq(urlWithoutRTSP, timeOutForSendMQ);
                 delete[] urlWithoutRTSP;                
 
                 DateBuffer theDate;

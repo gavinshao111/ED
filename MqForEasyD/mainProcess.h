@@ -22,15 +22,16 @@ typedef struct sVideoReqInfoType{
     bool ignore;
 }videoReqInfoType;
 
-int sendStartPushMq(const videoReqInfoType* aVideoReqInfo);
+int sendStartPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout);
 //int sendStopPushMqWhenThereIsNoClient(const char *fStreamName);
 //int sendStopPushMq(videoReqInfoType* aVideoReqInfo);
 
 /*
- *  filePath should like: /realtime/$1234/1/realtime.sdp
+ *  urlWithoutRTSP should like: 192.168.43.201:8888/realtime/$1234/1/realtime.sdp
  */
-int sendStopPushMq(const char *urlWithoutRTSP);
-int publishMq(const char *url, const char *clientId, const char *Topic, const char *PayLoad);
+int sendStopPushMq(const char *urlWithoutRTSP, const int& timeout);
+
+int publishMq(const char *url, const char *clientId, const char *Topic, const char *PayLoad, const int& timeout);
 
 /*
  * areq maybe:
@@ -46,7 +47,6 @@ int publishMq(const char *url, const char *clientId, const char *Topic, const ch
  * 
  */
 int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool startFromIp);
-
 
 #endif /* MAINPROCESS_H */
 

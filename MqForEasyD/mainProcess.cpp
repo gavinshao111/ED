@@ -22,9 +22,12 @@ extern "C"{
 #define AURLERR if ('\0' == *(aVideoReqInfo->req+i+3)){fprintf(stderr, "URL Format error.\n");return 9;}
 #define PRINTERR(ERRTYPE) fprintf(stderr, "%s format error:\n%s\n", (ERRTYPE), req);return 10;
 //MQ
+#define MAXPATHLEN 100
 const char *strClientIdForMQ = "EasyDarwin";
-const char *strMQServerAddress = "tcp://120.27.188.84:1883";
-//const char *strMQServerAddress = "tcp://localhost:1883";
+//const char *strMQServerAddress = "tcp://120.27.188.84:1883";
+const char *strMQServerAddress = "ssl://120.27.188.84:8883";
+
+
 //RTSP
 const char *strVideoinfoAsk = "videoinfoAsk";
 //EasyDarwin与车机的MQ
@@ -175,38 +178,12 @@ getUserAgentAndRet:
     return 0;
 }
 
-//int parseUrl(char *url, )
-
-/*
- * 客户端发过来的URL例子:
-rtsp://ip:port/realtime/$clientid/VideoType/realtime.sdp
-VideoType=1 标清
-VideoType=0 高清
- */
-/*
- * req例子: 
-OPTION rtsp://120.27.188.84:8888/realtime/$1234/0/realtime.sdp RTSP/1.0\r\n
-CSeq: 17\r\n
-
-
-DESCRIBE rtsp://172.17.4.9:8888/realtime/$carleapmotorCLOUDE20160727inform/1/realtime.sdp RTSP/1.0\r\n
-CSeq: 3\r\n
-User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
-Accept: application/sdp\r\n
-\r\n
- *  */
 
 static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* strTopic, char *strPayLoad, bool isBegin)
 {
     if (NULL == aVideoReqInfo || NULL == strTopic || NULL == strPayLoad)
-        return -1;
-	
-    //char strTopic[1 + videoTypeOfst - clientIdOfst + sizeof(strVideoinfoAsk)] = {0};
-    //char* strTopic = (char *)malloc(sizeof(char)*(1 + videoTypeOfst - clientIdOfst + sizeof(strVideoinfoAsk)));
-    //memset(strTopic, 0, sizeof(char)*(1 + videoTypeOfst - clientIdOfst + sizeof(strVideoinfoAsk)));
-    //char *strTopic = (char*)malloc(1 + videoTypeOfst - clientIdOfst + strlen(strVideoinfoAsk) + 2);
-    //memset(strTopic, 0, 1 + videoTypeOfst - clientIdOfst + strlen(strVideoinfoAsk) + 2);
-         
+        return -1;	
+
     *strTopic = '/';
     memcpy(strTopic + 1, aVideoReqInfo->req+aVideoReqInfo->clientIdOfst, aVideoReqInfo->videoTypeOfst - aVideoReqInfo->clientIdOfst);
     strlcpy(strTopic + 1 + aVideoReqInfo->videoTypeOfst - aVideoReqInfo->clientIdOfst, strVideoinfoAsk, maxPayLoadLen);    
@@ -249,7 +226,7 @@ static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* 
     return 0;
 }
 
-int sendStartPushMq(const videoReqInfoType* aVideoReqInfo) {
+int sendStartPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout) {
  
     if (NULL == aVideoReqInfo)
         return -1;        
@@ -260,7 +237,7 @@ int sendStartPushMq(const videoReqInfoType* aVideoReqInfo) {
     if (0 != generateTopicAndPayLoad(aVideoReqInfo, strTopic, strPayLoad, true))
         return -2;
     
-    int rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad);
+    int rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad, timeout);
     if (0 != rc){
         fprintf(stderr, "publishMq fail, return code: %d\n", rc);
         return -3;
@@ -269,7 +246,8 @@ int sendStartPushMq(const videoReqInfoType* aVideoReqInfo) {
     return 0;    
 }
 
-int sendStopPushMq(const char *urlWithoutRTSP) {
+
+int sendStopPushMq(const char *urlWithoutRTSP, const int& timeout) {
 
     if (NULL == urlWithoutRTSP)
         return -1;
@@ -287,7 +265,7 @@ int sendStopPushMq(const char *urlWithoutRTSP) {
         fprintf(stderr, "generateTopicAndPayLoad fail, return code: %d\n", rc);
         return -3;
     }
-    rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad);
+    rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad, timeout);
     if (0 != rc){
         fprintf(stderr, "publishMq fail, return code: %d\n", rc);
         return -4;
@@ -296,143 +274,12 @@ int sendStopPushMq(const char *urlWithoutRTSP) {
     return 0; 
 }
 
-/*
-int sendStopPushMqWhenThereIsNoClient(const char *url){
-#if IGNMQ
-    return 0;
-#endif  
-    if (NULL == url)
-        return -1;
-    
-    UINT clientIdOfst = -1;
-    UINT endOfClientIdOfst = -1;
-    UINT endOfFileNameOfst = -1;
-    UINT realOrRecFlagOfst = -1;
-    bool isRealtime = false;
-    int i = 0;
-    
-    if (*(url+i) != 'r' ||
-            *(url+ ++i) != 't' ||
-            *(url+ ++i) != 's' ||
-            *(url+ ++i) != 'p' ||
-            *(url+ ++i) != ':' ||
-            *(url+ ++i) != '/' ||
-            *(url+ ++i) != '/')
-        //PRINTERR("RTSP")
-        return -11;
-        
-    //ipOfst = ++i;
-    i++;
-    
-    for (; '/' != *(url+i); i++){
-        if ('\0' == *(url+i)){
-            fprintf(stderr, "URL Format error.\n");
-            return -9;
-        }    
-    }
-    realOrRecFlagOfst = ++i;
-    
-    if (0 == memcmp(url+i, "realtime", 8))
-        isRealtime = true;
-    else if (0 != memcmp(url+i, "record", 6))
-        return -10;
-    else
-        isRealtime = false;
-    
-    for (; '$' != *(url+i); i++){
-        if ('\0' == *(url+i))
-            return -1;        
-    }
-    clientIdOfst = ++i;        
-    
-    for (; '/' != *(url+i); i++){
-        if ('\0' == *(url+i))
-            return -2;        
-    }
-    endOfClientIdOfst = i;
-    if (endOfClientIdOfst <= clientIdOfst)
-        return -3;
-    for (; '/' != *(url+i); i++){
-        if ('\0' == *(url+i))
-            return -4;        
-    }    
-    for (;; i++){
-        if ('\0' == *(url+i))
-            return -5;
-        else if ('.' == *(url + i) &&
-                's' == *(url + ++i) &&
-                'd' == *(url + ++i) &&
-                'p' == *(url + ++i)) {
-            endOfFileNameOfst = ++i;
-            break;
-        }
-    }
-    if (-1 == endOfFileNameOfst)
-        return -6;
-    
-    //strTopic should like  "/carleapmotorCLOUDE20160727inform/videoinfoAsk";
-    //char strTopic[endOfClientIdOfst - clientIdOfst + sizeof(strVideoinfoAsk) + 2] = {0};
-    UINT lenOfStrTopic = endOfClientIdOfst - clientIdOfst + strlen(strVideoinfoAsk) + 4;
-    char *strTopic = (char*)malloc(lenOfStrTopic);
-    memset(strTopic, 0, lenOfStrTopic);
-    *strTopic = '/';
-    strncpy(strTopic + 1 , url + clientIdOfst, endOfClientIdOfst - clientIdOfst);
-    strlcat(strTopic, "/", lenOfStrTopic);
-    strlcat(strTopic, strVideoinfoAsk, lenOfStrTopic);
 
-    char strPayLoad[maxPayLoadLen] = {0};    
-    strlcat(strPayLoad, "{\"ServiceType\":\"", maxPayLoadLen);   
-    strlcat(strPayLoad, strServiceType, maxPayLoadLen);
-    strlcat(strPayLoad, "\",\"Data_Type\":\"", maxPayLoadLen);
-
-    if (isRealtime)
-        strlcat(strPayLoad, "Realtime", maxPayLoadLen);
-    else
-        strlcat(strPayLoad, "Recording", maxPayLoadLen);
-    
-    //strlcat(strPayLoad, strData_Type, maxPayLoadLen);
-    strlcat(strPayLoad, "\",\"URL\":\"", maxPayLoadLen);
-    //strlcat(strPayLoad, "rtsp://120.27.188.84:8888/", maxPayLoadLen);
-
-    strncat(strPayLoad, url, endOfFileNameOfst);   
-//    for(i = 0; 0 != *(fStreamName+i) &&  ' ' != *(fStreamName+i); i++)
-//    {
-//        *(strPayLoad+currPos+i) = *(fStreamName+i);
-//    }    
-    //strncat(strPayLoad, fStreamName, maxPayLoadLen);
-    
-    strlcat(strPayLoad, "\",\"VideoType\":\"", maxPayLoadLen);        
-    strlcat(strPayLoad, "\",\"Operation\":\"", maxPayLoadLen);
-    strlcat(strPayLoad, strOperationStop, maxPayLoadLen);
-
-    strlcat(strPayLoad, "\",\"Datetime\":\"", maxPayLoadLen);
-	struct timeval s_time;
-	gettimeofday(&s_time, NULL);
-	char strTime[20] ={0};
-	sprintf(strTime, "%ld", ((long)s_time.tv_sec)*1000+(long)s_time.tv_usec/1000);
-	strlcat(strPayLoad, strTime, maxPayLoadLen);
-    
-	strlcat(strPayLoad, "\"}", maxPayLoadLen);
-	
-//    char *strPayLoad = "{\"ServiceType\":\"\", \"Data_Type\": \"\", \"URL\":\"\", \"VideoType\":\"\" , \"Operation\":\"Stop\" }";    
-    
-    int rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad);
-    if (0 != rc){
-        fprintf(stderr, "publishMq to StopPush fail, return code: %d\n", rc);
-        free(strTopic);
-        return -7;
-    }
-    
-    free(strTopic);
-    return 0;
-}
-*/
-
-int publishMq(const char *url, const char *clientId, const char *Topic, const char *PayLoad) {
+int publishMq(const char *url, const char *clientId, const char *Topic, const char *PayLoad, const int& timeout) {
     MQTTClient client;
     int rc = 0;
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-    conn_opts.connectTimeout = 5;
+    conn_opts.connectTimeout = timeout;
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
 
@@ -446,6 +293,23 @@ int publishMq(const char *url, const char *clientId, const char *Topic, const ch
     conn_opts.cleansession = 1;
     conn_opts.username = "easydarwin";
     conn_opts.password = "123456";
+
+#if 1
+    char pathOfServerPublicKey[MAXPATHLEN] = {0};
+    char pathOfPrivateKey[MAXPATHLEN] = {0};
+    snprintf(pathOfPrivateKey, MAXPATHLEN - 1, "%s/MqForEasyD/emqtt.key", getenv("ED"));
+    snprintf(pathOfServerPublicKey, MAXPATHLEN - 1, "%s/MqForEasyD/emqtt.pem", getenv("ED"));
+    MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;
+    
+const char *pathOfServerPublicKey1 = "/mnt/hgfs/ShareFolder/paho.mqtt.cpp/emqtt.pem";
+const char *pathOfPrivateKey1 = "/mnt/hgfs/ShareFolder/paho.mqtt.cpp/emqtt.key";    
+    ssl_opts.trustStore = pathOfServerPublicKey1;
+    ssl_opts.keyStore = pathOfServerPublicKey1;
+    ssl_opts.privateKey = pathOfPrivateKey1;   
+    ssl_opts.enableServerCertAuth = 0;
+    conn_opts.ssl = &ssl_opts;
+#endif
+
     
     if (rc = MQTTClient_connect(client, &conn_opts) != MQTTCLIENT_SUCCESS)
     {

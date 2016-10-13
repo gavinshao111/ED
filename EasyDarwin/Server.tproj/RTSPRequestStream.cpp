@@ -47,6 +47,7 @@
 const char *strCarUserAgent = "LeapMotor Push v1.0";
 const char *strOPTION = "OPTION";
 const int timeToWait = 8;
+extern const int timeOutForSendMQ = 4;
 
 RTSPRequestStream::RTSPRequestStream(TCPSocket* sock)
 	: fSocket(sock),
@@ -227,7 +228,7 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                         else {
                             fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                             if (!videoReqInfo.ignore) {
-                                int rc2 = sendStartPushMq(&videoReqInfo);
+                                int rc2 = sendStartPushMq(&videoReqInfo, timeOutForSendMQ);
                                 if (0 == rc2){
                                     DateTranslator::UpdateDateBuffer(&theDate, 0);
                                     fprintf(stderr, "[INFO] %.*s: Start push MQ sent. %s TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());

@@ -55,6 +55,7 @@
 
 #include "mainProcess.h"
 #include "cCondVB.h"
+extern const int timeOutForSendMQ;
 
 char        RTSPRequestInterface::sPremadeHeader[kStaticHeaderSizeInBytes];
 StrPtrLen   RTSPRequestInterface::sPremadeHeaderPtr(sPremadeHeader, kStaticHeaderSizeInBytes);
@@ -622,7 +623,7 @@ void RTSPRequestInterface::WriteStandardHeaders()
                     sprintf(urlWithoutRTSP, "%s:%d%s", ip, port, fFilePath);
 
                     fprintf(stderr, "[INFO] %s: Haven't receive Push, APP will disconnect.\n", fFilePath+1);
-                    int rc = sendStopPushMq(urlWithoutRTSP);
+                    int rc = sendStopPushMq(urlWithoutRTSP, timeOutForSendMQ);
                     DateBuffer theDate;
                     DateTranslator::UpdateDateBuffer(&theDate, 0);
                     if (0 == rc)
