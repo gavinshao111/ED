@@ -300,12 +300,10 @@ int publishMq(const char *url, const char *clientId, const char *Topic, const ch
     snprintf(pathOfPrivateKey, MAXPATHLEN - 1, "%s/MqForEasyD/emqtt.key", getenv("ED"));
     snprintf(pathOfServerPublicKey, MAXPATHLEN - 1, "%s/MqForEasyD/emqtt.pem", getenv("ED"));
     MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;
-    
-const char *pathOfServerPublicKey1 = "/mnt/hgfs/ShareFolder/paho.mqtt.cpp/emqtt.pem";
-const char *pathOfPrivateKey1 = "/mnt/hgfs/ShareFolder/paho.mqtt.cpp/emqtt.key";    
-    ssl_opts.trustStore = pathOfServerPublicKey1;
-    ssl_opts.keyStore = pathOfServerPublicKey1;
-    ssl_opts.privateKey = pathOfPrivateKey1;   
+       
+    ssl_opts.trustStore = pathOfServerPublicKey;
+    ssl_opts.keyStore = pathOfServerPublicKey;
+    ssl_opts.privateKey = pathOfPrivateKey;   
     ssl_opts.enableServerCertAuth = 0;
     conn_opts.ssl = &ssl_opts;
 #endif
