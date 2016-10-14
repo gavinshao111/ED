@@ -20,12 +20,18 @@ int main(void)
     assert(0 == parseReq(req, &videoReqInfo, false));
     assert(videoReqInfo.ignore);
     assert(0 != videoReqInfo.userAgentOfst);
-    printf("%.9s\n", videoReqInfo.req + videoReqInfo.userAgentOfst);
+    //printf("%.9s\n", videoReqInfo.req + videoReqInfo.userAgentOfst);
     assert(0 == memcmp(videoReqInfo.req + videoReqInfo.userAgentOfst, strCarUserAgent, 9));
     
     //assert(0 == strcasecmp("Option", strOPTION));
     assert(0 == strncasecmp(videoReqInfo.req, strOPTION, strlen(strOPTION)));
+    
+    int timeOutForSendMQ = 4;
+    const char *urlWithoutRTSP = "10.34.16.143:8888/realtime/$1234/1/realtime.sdp";
+    assert(0 == sendStartPushMq(&videoReqInfo, timeOutForSendMQ));
+    assert(0 == sendStopPushMq(urlWithoutRTSP, timeOutForSendMQ));
 
 
+    cout<<"Test passed."<<endl;
     return 0;
 }
