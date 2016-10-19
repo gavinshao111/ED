@@ -179,7 +179,7 @@ getUserAgentAndRet:
 }
 
 
-static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* strTopic, char *strPayLoad, bool isBegin)
+static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* strTopic, char *strPayLoad, const bool& isBegin)
 {
     if (NULL == aVideoReqInfo || NULL == strTopic || NULL == strPayLoad)
         return -1;	
@@ -226,7 +226,7 @@ static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* 
     return 0;
 }
 
-int sendStartPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout) {
+int sendBeginOrStopPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout, const bool& isBegin) {
  
     if (NULL == aVideoReqInfo)
         return -1;        
@@ -234,7 +234,7 @@ int sendStartPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout) {
     //char *strTopic = (char*)malloc(1 + videoTypeOfst - clientIdOfst + strlen(strVideoinfoAsk) + 2);
     char strTopic[maxTopicLen] = {0};
     char strPayLoad[maxPayLoadLen] = {0};
-    if (0 != generateTopicAndPayLoad(aVideoReqInfo, strTopic, strPayLoad, true))
+    if (0 != generateTopicAndPayLoad(aVideoReqInfo, strTopic, strPayLoad, isBegin))
         return -2;
     
     int rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad, timeout);
@@ -253,22 +253,17 @@ int sendStopPushMq(const char *urlWithoutRTSP, const int& timeout) {
         return -1;
     
     videoReqInfoType videoReqInfo={0};
+    
     int rc = parseReq(urlWithoutRTSP, &videoReqInfo, true);
-    if (0 != rc){
+    if (0 != rc) {
         fprintf(stderr, "parseReq fail, return code: %d\n", rc);
         return -2; 
     }
-    char strTopic[maxTopicLen] = {0};
-    char strPayLoad[maxPayLoadLen] = {0};
-    rc = generateTopicAndPayLoad(&videoReqInfo, strTopic, strPayLoad, false);
-    if (0 != rc){
-        fprintf(stderr, "generateTopicAndPayLoad fail, return code: %d\n", rc);
+
+    rc = sendBeginOrStopPushMq(&videoReqInfo, timeout, false);
+    if (0 != rc) {
+        fprintf(stderr, "sendBeginOrStopPushMq fail, return code: %d\n", rc);
         return -3;
-    }
-    rc = publishMq(strMQServerAddress, strClientIdForMQ, strTopic, strPayLoad, timeout);
-    if (0 != rc){
-        fprintf(stderr, "publishMq fail, return code: %d\n", rc);
-        return -4;
     }
     
     return 0; 

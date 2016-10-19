@@ -22,9 +22,7 @@ typedef struct sVideoReqInfoType{
     bool ignore;
 }videoReqInfoType;
 
-int sendStartPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout);
-//int sendStopPushMqWhenThereIsNoClient(const char *fStreamName);
-//int sendStopPushMq(videoReqInfoType* aVideoReqInfo);
+int sendBeginOrStopPushMq(const videoReqInfoType* aVideoReqInfo, const int& timeout, const bool& isBegin);
 
 /*
  *  urlWithoutRTSP should like: 192.168.43.201:8888/realtime/$1234/1/realtime.sdp

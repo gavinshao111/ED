@@ -226,34 +226,49 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                         if (0 != rc)
                             fprintf(stderr, "[WARN] parseReq error, return code: %d\n\n", rc);
                         else {
+                            const char *fullFileName = videoReqInfo.req+videoReqInfo.realOrRecFlagOfst;
+                            int lenOfFullFileName = videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst;
                             fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                             if (!videoReqInfo.ignore) {
-                                int rc2 = sendStartPushMq(&videoReqInfo, timeOutForSendMQ);
+                                int rc2 = sendBeginOrStopPushMq(&videoReqInfo, timeOutForSendMQ, true);
                                 if (0 == rc2){
+                                    
                                     DateTranslator::UpdateDateBuffer(&theDate, 0);
-                                    fprintf(stderr, "[INFO] %.*s: Start push MQ sent. %s TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                                    fprintf(stderr, "[INFO] %.*s: Start push MQ sent. %s TID: %lu\n\n", lenOfFullFileName, fullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
-                                    if(!IsUrlExistingInSessionMap(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst)){
+                                    if(!IsUrlExistingInSessionMap(fullFileName, lenOfFullFileName)){
                                     //if(true){
-                                        fprintf(stderr, "[DEBUG] %.*s: path is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, OSThread::GetCurrentThreadID());
+                                        fprintf(stderr, "[DEBUG] %.*s: path is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", lenOfFullFileName, fullFileName, OSThread::GetCurrentThreadID());
 #if 1                                        
-                                        int rc3 = waitForPush(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, timeToWait);
-                                        if (-1 == rc3)
-                                            fprintf(stderr, "[WARN] %.*s: waitForPush error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
-                                        else if(-2 == rc3)
-                                            fprintf(stderr, "[INFO] %.*s: waitForPush time out (%ds).\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, timeToWait);
-                                        else
-                                            //sleep(1);
+                                        int rc3 = waitForPush(fullFileName, lenOfFullFileName, timeToWait);
+                                        if (0 == rc3)
                                             usleep(1000*100);
+                                        else {
+                                            if(-2 == rc3) {
+                                                fprintf(stderr, "[INFO] %.*s: waitForPush time out (%ds).\n\n", lenOfFullFileName, fullFileName, timeToWait);
+                                            }
+                                            else if (-1 == rc3)
+                                                fprintf(stderr, "[WARN] %.*s: waitForPush error.\n\n", lenOfFullFileName, fullFileName);
+
+                                            int rc4 = sendBeginOrStopPushMq(&videoReqInfo, timeOutForSendMQ, false);
+                                            if (0 == rc4)
+                                                fprintf(stderr, "[INFO] %.*s: StopPush MQ sent.\n\n", lenOfFullFileName, fullFileName);
+                                            else
+                                                fprintf(stderr, "[WARN] %.*s: sendBeginOrStopPushMq(false) fail, return code: %d\n\n", lenOfFullFileName, fullFileName, rc4);    
+
+                                            if (0 != cleanCV(fullFileName, lenOfFullFileName))
+                                                fprintf(stderr, "[INFO] %.*s: path is not existing in condition variable map.\n\n", lenOfFullFileName, fullFileName);
+                                        }
+                                            
 #else
                                         sleep(4);
 #endif                                        
                                     }
                                     else
-                                        fprintf(stderr, "[DEBUG] %.*s is ExistingInSessionMap.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);                             
-                                }                                
+                                        fprintf(stderr, "[DEBUG] %.*s is ExistingInSessionMap.\n\n", lenOfFullFileName, fullFileName);                             
+                                }
                                 else {
-                                    fprintf(stderr, "[WARN] sendStartPushMq for %.*s fail, return code: %d %s TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, rc2, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                                    fprintf(stderr, "[WARN] sendBeginOrStopPushMq(true) for %.*s fail, return code: %d %s TID: %lu\n\n", lenOfFullFileName, fullFileName, rc2, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                                 }
                             }
 #if 1
@@ -263,8 +278,8 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                                 
                                 fprintf(stderr, "[debug] before notifyAppThatPushIsArrived:\n%s\n\n", videoReqInfo.req);
                                 // it is push from Car, so notify APP wakeup.
-                                if (0 != notifyAppThatPushIsArrived(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst))
-                                    fprintf(stderr, "[WARN] notifyAppThatPushIsArrived for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
+                                if (0 != notifyAppThatPushIsArrived(fullFileName, lenOfFullFileName))
+                                    fprintf(stderr, "[WARN] notifyAppThatPushIsArrived for %.*s error.\n\n", lenOfFullFileName, fullFileName);
                             }
 #endif
 			}
