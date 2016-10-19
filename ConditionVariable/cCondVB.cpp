@@ -98,7 +98,7 @@ int waitForPush(const char* fullFileName, int length, int timeout)
     return 0;
 }
 
-int notifyAppThePsuhIsArrived(const char* fullFileName, int length)
+int notifyAppThatPushIsArrived(const char* fullFileName, int length)
 {
     if (NULL == fullFileName)
         return -1;

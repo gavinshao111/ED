@@ -261,10 +261,10 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                                      0 == memcmp(videoReqInfo.req + videoReqInfo.userAgentOfst, strCarUserAgent, 9) &&
                                      0 == strncasecmp(videoReqInfo.req, strOPTION, strlen(strOPTION))) {
                                 
-                                fprintf(stderr, "[debug] before notifyAppThePsuhIsArrived:\n%s\n\n", videoReqInfo.req);
+                                fprintf(stderr, "[debug] before notifyAppThatPushIsArrived:\n%s\n\n", videoReqInfo.req);
                                 // it is push from Car, so notify APP wakeup.
-                                if (0 != notifyAppThePsuhIsArrived(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst))
-                                    fprintf(stderr, "[WARN] notifyAppThePsuhIsArrived for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
+                                if (0 != notifyAppThatPushIsArrived(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst))
+                                    fprintf(stderr, "[WARN] notifyAppThatPushIsArrived for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
                             }
 #endif
 			}

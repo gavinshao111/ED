@@ -35,7 +35,7 @@ int waitForPush(const char* fullFileName, int length, int timeout);
  * 
  * 
  */
-int notifyAppThePsuhIsArrived(const char* fullFileName, int length);
+int notifyAppThatPushIsArrived(const char* fullFileName, int length);
 
 /*
  * rc:
