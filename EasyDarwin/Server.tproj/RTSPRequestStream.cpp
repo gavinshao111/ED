@@ -236,8 +236,7 @@ QTSS_Error RTSPRequestStream::ReadRequest()
                                     if(!IsUrlExistingInSessionMap(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst)){
                                     //if(true){
                                         fprintf(stderr, "[DEBUG] %.*s: path is not ExistingInSessionMap. Waiting for car to push. TID: %lu\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, OSThread::GetCurrentThreadID());
-#if 1
-                                        int timeToWait = 8;
+#if 1                                        
                                         int rc3 = waitForPush(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, timeToWait);
                                         if (-1 == rc3)
                                             fprintf(stderr, "[WARN] %.*s: waitForPush error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
@@ -260,10 +259,13 @@ QTSS_Error RTSPRequestStream::ReadRequest()
 #if 1
                             else if (0 != videoReqInfo.userAgentOfst && 
                                      0 == memcmp(videoReqInfo.req + videoReqInfo.userAgentOfst, strCarUserAgent, 9) &&
-                                     0 == strncasecmp(videoReqInfo.req, strOPTION, strlen(strOPTION)))
+                                     0 == strncasecmp(videoReqInfo.req, strOPTION, strlen(strOPTION))) {
+                                
+                                fprintf(stderr, "[debug] before notifyAppThePsuhIsArrived:\n%s\n\n", videoReqInfo.req);
                                 // it is push from Car, so notify APP wakeup.
                                 if (0 != notifyAppThePsuhIsArrived(videoReqInfo.req+videoReqInfo.realOrRecFlagOfst, videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst))
                                     fprintf(stderr, "[WARN] notifyAppThePsuhIsArrived for %.*s error.\n\n", videoReqInfo.fileNameEndOfst - videoReqInfo.realOrRecFlagOfst, videoReqInfo.req+videoReqInfo.realOrRecFlagOfst);
+                            }
 #endif
 			}
 		}
