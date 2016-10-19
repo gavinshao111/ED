@@ -27,6 +27,8 @@
 
 	 Contains:   Impelementation of object in .h
 
+  * Gavin's change:
+  * when send video data, rm output in stdout.
 
  */
 

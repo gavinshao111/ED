@@ -13,6 +13,10 @@ git add EasyDarwin/APIModules/QTSSReflectorModule/ReflectorSession.cpp
 git add EasyDarwin/Server.tproj/RTSPRequestInterface.cpp
 
 git add EasyDarwin/Server.tproj/RTSPRequestStream.cpp
+
+# when send video data, rm output in stdout.
+git add EasyDarwin/Server.tproj/RTSPResponseStream.cpp
+
 git add ConditionVariable/cCondVB.h
 git add ConditionVariable/cCondVB.cpp
 git add ConditionVariable/Buildit.sh
