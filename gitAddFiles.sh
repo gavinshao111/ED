@@ -35,4 +35,9 @@ git add MqForEasyD/emqtt.key
 git add MqForEasyD/emqtt.pem
 git add MqForEasyD/testFile.cpp
 
+git add MqForEasyD/MQTest/*.cpp
+git add paho.mqtt.c/build/output/*
+git add paho.mqtt.c/src/*.h
+
+
 git add gitAddFiles.sh
