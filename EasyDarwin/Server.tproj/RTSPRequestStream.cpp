@@ -48,6 +48,8 @@ const char *strCarUserAgent = "LeapMotor Push v1.0";
 const char *strOPTION = "OPTION";
 const int timeToWait = 8;
 extern const int timeOutForSendMQ = 4;
+extern int ServerPort = 0;
+extern char ServerIP[40] = {0};
 
 RTSPRequestStream::RTSPRequestStream(TCPSocket* sock)
 	: fSocket(sock),
@@ -212,6 +214,14 @@ QTSS_Error RTSPRequestStream::ReadRequest()
 				{
 					qtss_printf("#client: ip=NULL port=%u\n", clientPort);
 				}
+                                
+                                if(0 == ServerPort){
+                                    ServerPort = serverPort;
+                                    if (sizeof(ServerIP) <= theLocalAddrStr->Len)
+                                        fprintf(stderr, "[ERROR] ServerIP's size is too small! theLocalAddrStr->Len: %d\n\n", theLocalAddrStr->Len);
+                                    else
+                                        strcpy(ServerIP, theLocalAddrStr->Ptr);
+                                }
 
 			}
 

@@ -55,8 +55,9 @@
 #endif
 
 extern const int timeOutForSendMQ;
-const char *strDefaultIp = "120.27.188.84";
-const int defaultPort = 8888;
+extern int ServerPort;
+extern char ServerIP[20];
+
 
 FileDeleter::FileDeleter(StrPtrLen* inSDPPath)
 {
@@ -126,7 +127,7 @@ ReflectorSession::~ReflectorSession()
 	for (UInt32 x = 0; x < fSourceInfo->GetNumStreams(); x++)
 	{
 		if (fStreamArray[x] == NULL)
-			continue;
+			continue; 
 
 		fStreamArray[x]->SetMyReflectorSession(NULL);
 
@@ -419,23 +420,11 @@ void    ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClien
 		}
                 
 
-                // fStreamName is "realtime/$1234/1/realtime"
-                // we need splice tobe ip:port/realtime/$1234/1/realtim.sdp
-                const char *ip;                
-                StrPtrLen* SocketAIP = ((ReflectorSocket*)fStreamArray[0]->GetSocketPair()->GetSocketA())->GetLocalAddrStr();
-                StrPtrLen* SocketBIP = ((ReflectorSocket*)fStreamArray[0]->GetSocketPair()->GetSocketB())->GetLocalAddrStr();             
-                if (SocketAIP->Equal("0.0.0.0"))
-                    if (SocketBIP->Equal("0.0.0.0"))
-                        ip = strDefaultIp;
-                    else
-                        ip = SocketBIP->Ptr;
-                else
-                    ip = SocketAIP->Ptr;
-                
                 // fStreamName is like "realtime/$1234/1/realtime"
-                char* urlWithoutRTSP = new char[strlen(ip) + 20 + strlen(fStreamName) + 1];
-                memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fStreamName) + 1);
-                sprintf(urlWithoutRTSP, "%s:%d/%s.sdp", ip, defaultPort, fStreamName);
+                // we need splice tobe ip:port/realtime/$1234/1/realtim.sdp               
+                char* urlWithoutRTSP = new char[strlen(ServerIP) + 20 + strlen(fStreamName) + 1];
+                memset(urlWithoutRTSP, 0, strlen(ServerIP) + 20 + strlen(fStreamName) + 1);
+                sprintf(urlWithoutRTSP, "%s:%d/%s.sdp", ServerIP, ServerPort, fStreamName);
                 
                 int rc = sendStopPushMq(urlWithoutRTSP, timeOutForSendMQ);
                 delete[] urlWithoutRTSP;                
