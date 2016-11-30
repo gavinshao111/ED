@@ -7,6 +7,7 @@ git add CommonUtilitiesLib/OSRef.h
 git add EasyDarwin/APIModules/QTSSReflectorModule/QTSSReflectorModule.cpp
 
 # in ReflectorSession::RemoveOutput, dected that there is no APP in session, generate url and call StopPushMQ
+# use default ip and port. need modify.
 git add EasyDarwin/APIModules/QTSSReflectorModule/ReflectorSession.cpp
 
 # when ED send DESC:404, it will call RTSPRequestInterface::WriteStandardHeaders, generate url and call StopPushMQgit and cleanCV
@@ -14,7 +15,7 @@ git add EasyDarwin/Server.tproj/RTSPRequestInterface.cpp
 
 git add EasyDarwin/Server.tproj/RTSPRequestStream.cpp
 
-# when send video data, rm output in stdout.
+# when send video data, rm log output in stdout.
 git add EasyDarwin/Server.tproj/RTSPResponseStream.cpp
 
 git add ConditionVariable/cCondVB.h
@@ -41,3 +42,6 @@ git add paho.mqtt.c/src/*.h
 
 
 git add gitAddFiles.sh
+git add json.c
+git add CallStack.cpp
+git add profile
