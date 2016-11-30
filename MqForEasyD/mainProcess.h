@@ -3,7 +3,6 @@
 
 typedef struct sVideoReqInfoType{
     const char *req;
-    int urlOfst;
     int ipOfst;
     int portOfst;
     int realOrRecFlagOfst;

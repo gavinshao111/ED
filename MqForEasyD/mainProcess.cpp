@@ -50,7 +50,7 @@ int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool start
     
     UINT i = 0;
     UINT j = 0;
-    // step over space., point to "O".
+    // step over space.
     for(;' ' == *(areq+i); i++)
         if('\0' == *(areq+i))
             return -1;
@@ -66,9 +66,8 @@ int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool start
         for(;' ' != *(aVideoReqInfo->req+i); i++)
             if('\0' == *(aVideoReqInfo->req+i))
                 return -1;       
-    
-        aVideoReqInfo->urlOfst = ++i;
-        if (*(aVideoReqInfo->req+i) != 'r' ||
+            
+        if (*(aVideoReqInfo->req+ ++i) != 'r' ||
                 *(aVideoReqInfo->req+ ++i) != 't' ||
                 *(aVideoReqInfo->req+ ++i) != 's' ||
                 *(aVideoReqInfo->req+ ++i) != 'p' ||
@@ -197,8 +196,8 @@ static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* 
     else
         strlcat(strPayLoad, "Recording", maxPayLoadLen);
     
-    strlcat(strPayLoad, "\",\"URL\":\"", maxPayLoadLen);
-    strncat(strPayLoad, aVideoReqInfo->req + aVideoReqInfo->urlOfst, aVideoReqInfo->fileNameEndOfst - aVideoReqInfo->urlOfst);
+    strlcat(strPayLoad, "\",\"URL\":\"rtsp://", maxPayLoadLen);
+    strncat(strPayLoad, aVideoReqInfo->req + aVideoReqInfo->ipOfst, aVideoReqInfo->fileNameEndOfst - aVideoReqInfo->ipOfst);
     strlcat(strPayLoad, "\",\"VideoType\":\"", maxPayLoadLen);
     
     if(isBegin) {   //this is unnecessary filed when Stop
