@@ -58,7 +58,6 @@ extern const int timeOutForSendMQ;
 extern int ServerPort;
 extern char ServerIP[20];
 
-
 FileDeleter::FileDeleter(StrPtrLen* inSDPPath)
 {
 	Assert(inSDPPath);
@@ -127,7 +126,7 @@ ReflectorSession::~ReflectorSession()
 	for (UInt32 x = 0; x < fSourceInfo->GetNumStreams(); x++)
 	{
 		if (fStreamArray[x] == NULL)
-			continue; 
+			continue;
 
 		fStreamArray[x]->SetMyReflectorSession(NULL);
 
