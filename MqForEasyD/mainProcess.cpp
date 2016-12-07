@@ -42,6 +42,28 @@ const char *strCarUserAgent = "LeapMotor Push v1.0";
 const UINT maxPayLoadLen= 2000;
 const UINT maxTopicLen= 500;
 
+void videoReqInfoType::print(void){
+/**
+    const char *req;
+    int ipOfst;
+    int portOfst;
+    int realOrRecFlagOfst;
+    int clientIdOfst;
+    int videoTypeOfst;
+    int fileNameOfst;
+    int fileNameEndOfst;
+    int userAgentOfst;
+    bool ignore;
+ */
+    if ( NULL != req){
+        fprintf(stderr, "req: %s\n\n"
+                "ipOfst: %c, portOfst: %c, realOrRecFlagOfst: %c, clientIdOfst: %c, videoTypeOfst: %c, fileNameOfst: %c, fileNameEndOfst: %c, userAgentOfst: %c, ignore: %d\n\n", 
+                req, *(req+ipOfst), *(req+portOfst), *(req+realOrRecFlagOfst), *(req+clientIdOfst), *(req+videoTypeOfst), *(req+fileNameOfst), *(req+fileNameEndOfst), *(req+userAgentOfst), (int)ignore);
+    }
+    else
+        fprintf(stderr, "req: null\n\n", req);
+    
+}
 
 int parseReq(const char *areq, videoReqInfoType* aVideoReqInfo, const bool startFromIp)
 {

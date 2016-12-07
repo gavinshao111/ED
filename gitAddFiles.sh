@@ -45,3 +45,9 @@ git add gitAddFiles.sh
 git add json.c
 git add CallStack.cpp
 git add profile
+
+
+# branch tmpSave
+# git add EasyDarwin/Server.tproj/QTSServer.cpp
+# git add EasyDarwin/Server.tproj/QTSServerInterface.*
+# git add EasyDarwin/RTSPReqInfo/RTSPReqInfo.*

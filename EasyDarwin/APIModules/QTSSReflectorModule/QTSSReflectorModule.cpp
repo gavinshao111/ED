@@ -28,7 +28,7 @@
  * 
  * Gavin's change:
  * in FindOrCreateSession, when push arrived add output.
- * in RemoveOutputor, when push stop, add output then call cleanCV.
+ * in RemoveOutput, when push stop, add output then call cleanCV.
  * implementation of IsUrlExistingInSessionMap
  */
 
@@ -57,8 +57,10 @@
 #include <unistd.h>
 #endif
 
+#if 0
 #include "GetSession.h"
 #include "cCondVB.h"
+#endif
 
 #define REFLECTORSESSION_DEBUG 1
 
@@ -1447,12 +1449,12 @@ ReflectorSession* FindOrCreateSession(StrPtrLen* inPath, QTSS_StandardRTSP_Param
 		theErr = sSessionMap->Register(theSession->GetRef());
 		Assert(theErr == QTSS_NoErr);
 
-                if (isPush) {
-                    DateBuffer theDate;                        
-                    DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
-                    // theSession->GetSessionName() is like "realtime/$1234/1/realtime"
-                    fprintf(stderr, "[INFO] %s.sdp: Push established. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
-                }
+                
+                DateBuffer theDate;                        
+                DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
+                // theSession->GetSessionName() is like "realtime/$1234/1/realtime"
+                fprintf(stderr, "[INFO] %s.sdp: Push established. %s\n\n", theSession->GetSessionName(), theDate.GetDateBuffer());                    
+                
 
 		// unless we do this, the refcount won't increment (and we'll delete the session prematurely
 		//if (!isPush)
@@ -2164,9 +2166,10 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 #endif
                                 // theSessionRef->GetString()->Ptr is like "./Movies/realtime/$1234/1/realtime.sdp"
 				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));
+#if 0
                                 if (0 != cleanCV(theSessionRef->GetString()->Ptr + strlen("./Movies/"), 0))
                                     fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));
-                                
+#endif                                
                                 sSessionMap->UnRegister(theSessionRef);
 				delete inSession;
 			}
@@ -2355,18 +2358,19 @@ Bool16 IsAbsolutePath(StrPtrLen *inPathPtr)
 
 	return false;
 }
-
-bool IsUrlExistingInSessionMap(const char *fullFileName, int length)
+#if 0
+bool IsUrlExistingInSessionMap(StrPtrLen& fullFileName)
 {
     // we need str.Prt = "./Movies/realtime/$1234/1/realtime.sdp".
     StrPtrLen inPath;
-    inPath.Len = 9 + length;
+    inPath.Len = 9 + fullFileName.Len;
     inPath.Ptr = NEW char[inPath.Len + 1];										
     memset(inPath.Ptr, 0, inPath.Len + 1);
     memcpy(inPath.Ptr, "./Movies/", 9);
-    memcpy(inPath.Ptr+9, fullFileName, length);
+    memcpy(inPath.Ptr+9, fullFileName.Ptr, fullFileName.Len);
     
     bool rc =  sSessionMap->IsKeyExistingInTable(&inPath);
     inPath.Delete();
     return rc;
 }
+#endif

@@ -198,7 +198,7 @@ void OSRefTable::Swap(OSRef* newRef)
 	else
 		Assert(0);
 }
-
+#if 0
 bool OSRefTable::IsKeyExistingInTable(StrPtrLen* inUniqueID)
 {
 	Assert(inUniqueID != NULL);
@@ -208,3 +208,4 @@ bool OSRefTable::IsKeyExistingInTable(StrPtrLen* inUniqueID)
 	OSMutexLocker locker(&fMutex);
 	return (NULL != fTable.Map(&key));
 }
+#endif

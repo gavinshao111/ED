@@ -235,11 +235,12 @@ public:
 
 	UInt32      GetNumRefsInTable() { UInt64 result = fTable.GetNumEntries(); Assert(result < kUInt32_Max); return (UInt32)result; }
 
+#if 0
         /*
         * inUniqueID is like "./Movies/realtime/$1234/1/realtime.sdp"
         */
         bool IsKeyExistingInTable(StrPtrLen* inUniqueID);
-        
+#endif
 private:
 
 

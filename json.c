@@ -1,5 +1,6 @@
-topic: /leapmotorNo1/videoinfoAsk
-   message: {"ServiceType":"viedoPlayer","Data_Type":"Recording","URL":"10.34.16.127:8888/record/$leapmotorNo1/1/123.sdp","VideoType":"","Operation":"Stop","Datetime":"1480474086800"}
+{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp","VideoType":"SD","Operation":"Begin","Datetime":"1480735266671"}
+
+{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp","VideoType":"","Operation":"Stop","Datetime":"1480735281212"}
 
 EasyDarwin与车机MQTT的实时视频通讯JSON发送
 
@@ -13,7 +14,7 @@ EasyDarwin与车机MQTT的实时视频通讯JSON发送
 
 "VideoType":"SD",                              //HD高清        SD标清
 
-"Operation":" Begin"  / "Stop"
+"Operation":" Begin"  / "Stop",
 
 "Datetime":"1480474086800"
 
@@ -33,7 +34,7 @@ EasyDarwin与车机MQTT的录像通讯JSON发送
 
 "CurrentTime":"0",                             //默认单位为秒，录像拖动时需要
 
-"Operation":" Begin"
+"Operation":" Begin",
 
 "Datetime":"1480474086800"
 

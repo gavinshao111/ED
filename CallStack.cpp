@@ -83,6 +83,10 @@ class RTSPRequestStream {
 
 
 EasyDarwin\APIModules\QTSSReflectorModule\QTSSReflectorModule.cpp
+Initialize(){
+    static OSRefTable* sSessionMap = QTSServerInterface::GetServer()->GetReflectorSessionMap();
+}
+
 DoSetup{
     if (!isPush)
         RTPSessionOutput * theNewOutput = NEW RTPSessionOutput(inParams->inClientSession, theSession, sServerPrefs, sStreamCookieAttr);
@@ -188,3 +192,36 @@ class Socket {
         return OS_NoErr;
     }
 }
+
+QTSServer::Initialize(){
+    fReflectorSessionMap = new OSRefTable(kReflectorSessionMapSize/* 5000 */);
+}
+class OSRefTable{
+    OSRefHashTable  fTable;
+    OSRefTable(int size):fTable(size){}
+}
+typedef OSHashTable<OSRef, OSRefKey> OSRefHashTable;
+template<class T, class K>
+class OSHashTable {
+    OSHashTable( UInt32 size )
+    {
+        fHashTable = new ( T*[size] );
+        Assert( fHashTable );
+        memset( fHashTable, 0, sizeof(T*) * size );
+        fSize = size;
+        // Determine whether the hash size is a power of 2
+        // if not set the mask to zero, otherwise we can
+        // use the mask which is faster for ComputeIndex
+        fMask = fSize - 1;
+        if ((fMask & fSize) != 0)
+            fMask = 0;
+        fNumEntries = 0;
+    }
+    private:
+        T** fHashTable;
+        UInt32 fSize;
+        OSCond  fCond;
+}
+
+
+
