@@ -44,10 +44,7 @@
 #include "cCondVB.h"
 #endif
 
-#include "QTSServerInterface.h"
 #include "RTSPReqInfo.h"
-#include "RTSPReqInfoTable.h"
-#include <errno.h>
 
 #define READ_DEBUGGING 0
 #if 0
@@ -55,9 +52,9 @@ const char *strCarUserAgent = "LeapMotor Push v1.0";
 const char *strOPTION = "OPTION";
 extern int ServerPort = 0;
 extern char ServerIP[40] = {0};
-#endif
 const int timeToWaitForPush = 8;
 extern const int timeOutForSendMQ = 4;
+#endif
 
 RTSPRequestStream::RTSPRequestStream(TCPSocket* sock)
 : fSocket(sock),
@@ -204,7 +201,7 @@ QTSS_Error RTSPRequestStream::ReadRequest() {
                 } else {
                     qtss_printf("#client: ip=NULL port=%u\n", clientPort);
                 }
-
+#if 0
                 if (0 == ServerPort) {
                     ServerPort = serverPort;
                     if (sizeof (ServerIP) <= theLocalAddrStr->Len)
@@ -212,7 +209,7 @@ QTSS_Error RTSPRequestStream::ReadRequest() {
                     else
                         strcpy(ServerIP, theLocalAddrStr->Ptr);
                 }
-
+#endif
             }
 
             StrPtrLen str(fRequest);
@@ -285,34 +282,7 @@ QTSS_Error RTSPRequestStream::ReadRequest() {
             }
 #endif
 
-            OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
-            RTSPReqInfo* rtspReqInfo = new RTSPReqInfo(fRequest);
-            rtspReqInfo->parseReqAndPrint();
-
-            if (!rtspReqInfo->isFromLeapMotor
-                    && rtspReqInfo->RTSPType == enumRTSPType.option
-                    //&& rtspReqInfoTable->Register() // if Register fail, it means motor is pushing for this key, do nothing.
-                ) {
-                rtspReqInfo->readyToAddToTable();
-                QTSS_Error theErr = rtspReqInfoTable->Register(rtspReqInfo->GetRef());
-                if(QTSS_NoErr == theErr){                
-                    if (rtspReqInfo->sendBeginMQAndWaitForPushArrived(timeOutForSendMQ, timeToWaitForPush))
-                        usleep(1000 * 100); // at this time, motor and app are all in option, we delay app to let motor setup first.
-                    else{
-                        DateTranslator::UpdateDateBuffer(&theDate, 0);
-                        fprintf(stderr, "[INFO] %s: Wait for push timeout(%ds) %s TID: %lu\n\n", rtspReqInfo->fullFileName, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-                    }
-                }
-                else if(QTSS_DupName == theErr){
-                    RTSPReqInfo* rtspReqInfoWithSameKeyAlreadyExisting = (RTSPReqInfo*)rtspReqInfoTable->Resolve(rtspReqInfo->fullFileName)->GetObject();
-                    if (!rtspReqInfoWithSameKeyAlreadyExisting->isPushArrived)  // other app is wait for this key's push, I wait sa well.
-                        rtspReqInfo->sendBeginMQAndWaitForPushArrived();
-                    // else other app is playing in this key.
-                }
-            } else if (rtspReqInfo->isFromLeapMotor
-                    && rtspReqInfo->RTSPType == enumRTSPType.option)
-                rtspReqInfo->notifyAppThatPushIsArrived();
-
+            parseAndRegisterAndSendBeginMQAndWait(fRequest);
 
         }
 

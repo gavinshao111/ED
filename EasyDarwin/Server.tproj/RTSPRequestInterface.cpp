@@ -56,11 +56,11 @@
 #if 0
 #include "mainProcess.h"
 #include "cCondVB.h"
+extern const int timeOutForSendMQ;
 #endif
 
-#include "RTSPReqInfoTable.h"
+
 #include "RTSPReqInfo.h"
-extern const int timeOutForSendMQ;
 
 char RTSPRequestInterface::sPremadeHeader[kStaticHeaderSizeInBytes];
 StrPtrLen RTSPRequestInterface::sPremadeHeaderPtr(sPremadeHeader, kStaticHeaderSizeInBytes);
@@ -640,37 +640,12 @@ void RTSPRequestInterface::WriteStandardHeaders() {
                 fprintf(stderr, "[WARN] %s: sendStopPushMq fail, return code: %d %s\n\n", fFilePath + 1, rc, theDate.GetDateBuffer());
             if (0 != cleanCV(fFilePath + 1, 0))
                 fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", fFilePath + 1);
-#endif
+#endif           
             DateBuffer theDate;
-            RTSPReqInfoTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoTable();
-            StrPtrLen fullFileName(fFilePath+1);
+            UnRegisterAndSendMQAndDelete(fFilePath+1);
+            DateTranslator::UpdateDateBuffer(&theDate, 0);
+            fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. Stop MQ sent. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             
-            RTSPReqInfo rtspReqInfo = rtspReqInfoTable->GetRTSPReqInfoByKey(fullFileName);
-            if (rtspReqInfo == NULL){
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
-                fprintf(stderr, "[ERROR] %s: DESC 404, GetRTSPReqInfoByKey fail. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            }else{
-                rtspReqInfo.sendStopMq(timeOutForSendMQ);
-                rtspReqInfoTable->UnRegister(fullFileName);
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
-                fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. Stop MQ sent. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            }
-            
-//            RTSPReqInfo rtspReqInfo = rtspReqInfoTable->GetRTSPReqInfoByKey(fullFileName);
-//            if (rtspReqInfoTable == NULL){
-//                DateTranslator::UpdateDateBuffer(&theDate, 0);
-//                fprintf(stderr, "[ERROR] DESC 404, GetRTSPReqInfoByKey fail, fullFileName: ");
-//                fullFileName.PrintStr();
-//            }
-//            else{
-//                rtspReqInfo.sendStopMq();
-//                if (!rtspReqInfoTable->UnRegister(fullFileName)){
-//                    fprintf(stderr, "[ERROR] DESC 404, GetRTSPReqInfoByKey successful but UnRegister fail, fullFileName: ");
-//                    fullFileName.PrintStr();
-//                }
-//                DateTranslator::UpdateDateBuffer(&theDate, 0);
-//                fprintf(stderr, "[INFO] DESC 404, app disconnect. Stop MQ sent. %s %lu\n\n", theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-//            }
         }
     }
 

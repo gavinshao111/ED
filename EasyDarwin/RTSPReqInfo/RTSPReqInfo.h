@@ -3,6 +3,9 @@
 
 
 #include "StrPtrLen.h"
+#include "OSRef.h"
+#include "OSMutex.h"
+#include "OSCond.h"
 
 /*
  * RTSP req without fullFileName will be set to invaild, like OPTION rtsp://120.27.188.84:8888 RTSP/1.0\r\n CSeq: 17\r\n
@@ -11,7 +14,8 @@ enum enumRTSPType {
     option, describe, announce, setup, play, record, teardown, invaild
 };
 
-
+void UnRegisterAndSendMQAndDelete(char *key);
+void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
 
 class RTSPReqInfo {
     /*
@@ -42,7 +46,7 @@ public:
      * it is key for every push
      * expect like record/phoneapptest/1/123.sdp
      */
-    StrPtrLen fullFileName;
+    StrPtrLen filePath;
 
     RTSPReqInfo(const StrPtrLen& completeRequest);
     RTSPReqInfo(const RTSPReqInfo& orig);
@@ -103,9 +107,6 @@ private:
      * 1 -> false -> SD
      */
     bool isHD;
-
-    // *.sdp
-    StrPtrLen filePath;
 
     StrPtrLen userAgent;
 

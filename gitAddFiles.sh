@@ -18,25 +18,25 @@ git add EasyDarwin/Server.tproj/RTSPRequestStream.cpp
 # when send video data, rm log output in stdout.
 git add EasyDarwin/Server.tproj/RTSPResponseStream.cpp
 
-git add ConditionVariable/cCondVB.h
-git add ConditionVariable/cCondVB.cpp
-git add ConditionVariable/Buildit.sh
+# git add ConditionVariable/cCondVB.h
+# git add ConditionVariable/cCondVB.cpp
+# git add ConditionVariable/Buildit.sh
 
 git add EasyDarwin/WinNTSupport/easydarwin.xml
 git add EasyDarwin/startUp*
 
-git add MqForEasyD/GetSession.h
+# git add MqForEasyD/GetSession.h
 
-git add MqForEasyD/mainProcess.cpp
-git add MqForEasyD/mainProcess.h
-git add MqForEasyD/strlfunc.cpp
-git add MqForEasyD/strlfunc.h
-git add MqForEasyD/Buildit.sh
+# git add MqForEasyD/mainProcess.cpp
+# git add MqForEasyD/mainProcess.h
+# git add MqForEasyD/strlfunc.cpp
+# git add MqForEasyD/strlfunc.h
+# git add MqForEasyD/Buildit.sh
 git add MqForEasyD/emqtt.key
 git add MqForEasyD/emqtt.pem
-git add MqForEasyD/testFile.cpp
+# git add MqForEasyD/testFile.cpp
 
-git add MqForEasyD/MQTest/*.cpp
+# git add MqForEasyD/MQTest/*.cpp
 git add paho.mqtt.c/build/output/*
 git add paho.mqtt.c/src/*.h
 
@@ -48,6 +48,9 @@ git add profile
 
 
 # branch tmpSave
-# git add EasyDarwin/Server.tproj/QTSServer.cpp
-# git add EasyDarwin/Server.tproj/QTSServerInterface.*
-# git add EasyDarwin/RTSPReqInfo/RTSPReqInfo.*
+git add EasyDarwin/Server.tproj/QTSServer.cpp
+git add EasyDarwin/Server.tproj/QTSServerInterface.*
+git add EasyDarwin/RTSPReqInfo/RTSPReqInfo.h
+git add EasyDarwin/RTSPReqInfo/RTSPReqInfo.cpp
+git add CommonUtilitiesLib/StrPtrLen.cpp
+git add CommonUtilitiesLib/StrPtrLen.h

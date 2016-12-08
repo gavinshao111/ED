@@ -48,7 +48,11 @@
 
 #if 0
 #include "mainProcess.h"
+extern const int timeOutForSendMQ;
+extern int ServerPort;
+extern char ServerIP[20];
 #endif
+#include "RTSPReqInfo.h"
 
 #if DEBUG
 #define REFLECTOR_SESSION_DEBUGGING 0
@@ -56,9 +60,6 @@
 #define REFLECTOR_SESSION_DEBUGGING 0
 #endif
 
-//extern const int timeOutForSendMQ;
-//extern int ServerPort;
-//extern char ServerIP[20];
 
 FileDeleter::FileDeleter(StrPtrLen* inSDPPath) {
     Assert(inSDPPath);
@@ -397,23 +398,14 @@ void ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClient) 
         else
             fprintf(stderr, "[WARN] %s.sdp: No APP, sendStopPushMq fail, return code: %d %s\n\n", fStreamName, rc, theDate.GetDateBuffer());
 #endif
-//        DateBuffer theDate;
-//        RTSPReqInfoTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoTable();
-//        int lenOffStreamName = strlen(fStreamName);
-//        char cFullFileName[5 + lenOffStreamName] = {0};
-//        sprintf(cFullFileName, "%s.sdp", fStreamName);
-//        StrPtrLen fullFileName(cFullFileName);
-//        RTSPReqInfo rtspReqInfo = rtspReqInfoTable->GetRTSPReqInfoByKey(fullFileName);
-//        if (rtspReqInfo == NULL){
-//            DateTranslator::UpdateDateBuffer(&theDate, 0);
-//            fprintf(stderr, "[ERROR] %s: No app, GetRTSPReqInfoByKey fail. %s TID: %lu\n\n", cFullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-//        }else{
-//            rtspReqInfo.sendStopMq(timeOutForSendMQ);
-//            rtspReqInfoTable->UnRegister(fullFileName);
-//            DateTranslator::UpdateDateBuffer(&theDate, 0);
-//            fprintf(stderr, "[INFO] %s: No app, app disconnect. Stop MQ sent. %s TID: %lu\n\n", cFullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-//        }
-
+        DateBuffer theDate;
+        int lenOffStreamName = strlen(fStreamName);
+        char* cFullFileName = new char[5 + lenOffStreamName];
+        sprintf(cFullFileName, "%s.sdp", fStreamName);
+        *(cFullFileName + 5 + lenOffStreamName - 1) = 0;
+        UnRegisterAndSendMQAndDelete(cFullFileName);
+        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        fprintf(stderr, "[INFO] %s: No app, app disconnect. Stop MQ sent. %s TID: %lu\n\n", cFullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     }
 }
 
