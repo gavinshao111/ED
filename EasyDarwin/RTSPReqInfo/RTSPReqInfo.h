@@ -46,7 +46,7 @@ public:
      * it is key for every push
      * expect like record/phoneapptest/1/123.sdp
      */
-    StrPtrLen filePath;
+    StrPtrLen filePath;    
 
     RTSPReqInfo(const StrPtrLen& completeRequest);
     RTSPReqInfo(const RTSPReqInfo& orig);

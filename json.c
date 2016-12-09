@@ -12,7 +12,7 @@ EasyDarwin与车机MQTT的实时视频通讯JSON发送
 
 "URL":"rtsp://ip:Port/realtime/$clientid/realtime.sdp",   // need when stop
 
-"VideoType":"SD",                              //HD高清        SD标清
+"VideoType":"SD",                              //HD高清  0      SD标清 1
 
 "Operation":" Begin"  / "Stop",
 

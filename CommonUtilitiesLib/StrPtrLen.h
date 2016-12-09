@@ -131,6 +131,14 @@ public:
         void AllocateAndCopy(const char *src);
         void AllocateAndCopy(const StrPtrLen& src);
         
+        // return NULL if can't find target.
+        char* FindNextChar(const char& target, const int& offset = 0) const;
+                
+        char* FindNextChar(const char& target, const char* pos) const {
+            return FindNextChar(target, pos - Ptr);
+        }
+        char* GetEnd() const {return Ptr + Len - 1;}
+        
 #if STRPTRLENTESTING
 	static Bool16   Test();
 #endif

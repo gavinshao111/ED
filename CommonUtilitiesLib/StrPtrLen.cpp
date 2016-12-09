@@ -160,6 +160,7 @@ Bool16 StrPtrLen::EqualIgnoreCase(const char* compare, const UInt32 len) const
 	return false;
 }
 
+
 char* StrPtrLen::FindStringCase(char* queryCharStr, StrPtrLen* resultStr, Bool16 caseSensitive) const
 {
 	// Be careful about exiting this method from the middle. This routine deletes allocated memory at the end.
@@ -589,4 +590,15 @@ void StrPtrLen::AllocateAndCopy(const StrPtrLen& src){
     Len = src.Len;
     Ptr = NEW char[Len];
     memcpy(Ptr, src.Ptr, Len);
+}
+char* StrPtrLen::FindNextChar(const char& target, const int& offset/*= 0*/) const {
+    if (offset < 0 || Len < offset || Ptr == NULL)
+        return NULL;
+    
+    for(int targetOffset = offset; Len >= targetOffset; targetOffset++){
+        if (target == Ptr[targetOffset])
+            return Ptr+targetOffset;
+    }
+    
+    return NULL;
 }
