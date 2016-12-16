@@ -403,9 +403,9 @@ void ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClient) 
         char* cFullFileName = new char[5 + lenOffStreamName];
         sprintf(cFullFileName, "%s.sdp", fStreamName);
         *(cFullFileName + 5 + lenOffStreamName - 1) = 0;
-        UnRegisterAndSendMQAndDelete(cFullFileName);
         DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[INFO] %s: No app, app disconnect. Stop MQ sent. %s TID: %lu\n\n", cFullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+        fprintf(stderr, "[INFO] %s: No app, app disconnect. Send Stop MQ. %s TID: %lu\n\n", cFullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+        UnRegisterAndSendMQAndDelete(cFullFileName);
     }
 }
 

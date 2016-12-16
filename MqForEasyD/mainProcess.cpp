@@ -236,13 +236,13 @@ static int generateTopicAndPayLoad(const videoReqInfoType* aVideoReqInfo, char* 
         strlcat(strPayLoad, strOperationStop, maxPayLoadLen);
 
     strlcat(strPayLoad, "\",\"Datetime\":\"", maxPayLoadLen);
-	struct timeval s_time;
-	gettimeofday(&s_time, NULL);
-	char strTime[20] ={0};
-	sprintf(strTime, "%ld", ((long)s_time.tv_sec)*1000+(long)s_time.tv_usec/1000);
-	strlcat(strPayLoad, strTime, maxPayLoadLen);
-    
-	strlcat(strPayLoad, "\"}", maxPayLoadLen);
+    struct timeval s_time;
+    gettimeofday(&s_time, NULL);
+    char strTime[20] ={0};
+    sprintf(strTime, "%ld", ((long)s_time.tv_sec)*1000+(long)s_time.tv_usec/1000);
+    strlcat(strPayLoad, strTime, maxPayLoadLen);
+
+    strlcat(strPayLoad, "\"}", maxPayLoadLen);
 	
     return 0;
 }

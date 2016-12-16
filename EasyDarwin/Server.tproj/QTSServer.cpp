@@ -87,6 +87,7 @@
 
 #include "RTPStream3gpp.h"
 #include "RTSPRequest3GPP.h"
+#include "RTSPReqInfo.h"
 
 // CLASS DEFINITIONS
 
@@ -175,6 +176,7 @@ QTSServer::~QTSServer()
 	delete serverlocker;
 	delete fSrvrPrefs;
         delete fRTSPReqInfoMap;
+        delete PushInfo::fMutexForSendMQ;
 }
 
 Bool16 QTSServer::Initialize(XMLPrefsParser* inPrefsSource, PrefsSource* inMessagesSource, UInt16 inPortOverride, Bool16 createListeners, const char*inAbsolutePath)
@@ -237,6 +239,7 @@ Bool16 QTSServer::Initialize(XMLPrefsParser* inPrefsSource, PrefsSource* inMessa
 	fReflectorSessionMap = new OSRefTable(kReflectorSessionMapSize);
 
         fRTSPReqInfoMap = new OSRefTable(kReflectorSessionMapSize);
+        PushInfo::fMutexForSendMQ = new OSMutex();
         
 	//
 	// Load ERROR LOG module only. This is good in case there is a startup error.

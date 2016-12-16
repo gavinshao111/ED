@@ -136,6 +136,19 @@ void OSRefTable::UnRegister(OSRef* ref, UInt32 refCount)
 	fTable.Remove(ref);
 }
 
+OSRef* OSRefTable::ResolveAndUnRegister(StrPtrLen* inUniqueID){
+	Assert(inUniqueID != NULL);
+	OSRefKey key(inUniqueID);
+
+	//this must be done atomically wrt the table
+	OSMutexLocker locker(&fMutex);
+	OSRef* ref = fTable.Map(&key);
+	if (ref != NULL)
+            fTable.Remove(ref);
+        
+	return ref;
+}
+
 Bool16 OSRefTable::TryUnRegister(OSRef* ref, UInt32 refCount)
 {
 	OSMutexLocker locker(&fMutex);

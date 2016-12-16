@@ -61,7 +61,8 @@
 #include "GetSession.h"
 #include "cCondVB.h"
 #endif
-
+#include "RTSPReqInfo.h"
+#include <time.h>
 #define REFLECTORSESSION_DEBUG 1
 
 #if DEBUG
@@ -2156,7 +2157,10 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 			}
 
 #ifdef REFLECTORSESSION_DEBUG
-			qtss_printf("QTSSReflectorModule.cpp:RemoveOutput Session =%p refcount=%"   _U32BITARG_   "\n", inSession->GetRef(), inSession->GetRef()->GetRefCount());
+                        time_t t = time(NULL);
+                        struct tm* current_time = localtime(&t);
+			qtss_printf("QTSSReflectorModule.cpp:RemoveOutput Session =%p refcount=%"   _U32BITARG_   " %d:%d:%d\n", 
+                                inSession->GetRef(), inSession->GetRef()->GetRefCount(), current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
 #endif
 			if (theSessionRef->GetRefCount() == 0)
 			{
@@ -2165,11 +2169,15 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 				qtss_printf("QTSSReflectorModule.cpp:RemoveOutput UnRegister and delete session =%p refcount=%"   _U32BITARG_   "\n", theSessionRef, theSessionRef->GetRefCount());
 #endif
                                 // theSessionRef->GetString()->Ptr is like "./Movies/realtime/$1234/1/realtime.sdp"
-				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));
+                                char* key = theSessionRef->GetString()->Ptr + strlen("./Movies/");
+				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", key);
+                                UnRegisterAndSendMQAndDelete(key);
 #if 0
                                 if (0 != cleanCV(theSessionRef->GetString()->Ptr + strlen("./Movies/"), 0))
                                     fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));
-#endif                                
+#endif
+
+
                                 sSessionMap->UnRegister(theSessionRef);
 				delete inSession;
 			}

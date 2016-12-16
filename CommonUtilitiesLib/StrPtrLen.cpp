@@ -602,3 +602,5 @@ char* StrPtrLen::FindNextChar(const char& target, const int& offset/*= 0*/) cons
     
     return NULL;
 }
+
+void StrPtrLen::PrintToStderr(void) const {fprintf(stderr, "%.*s\n", Len, Ptr);}

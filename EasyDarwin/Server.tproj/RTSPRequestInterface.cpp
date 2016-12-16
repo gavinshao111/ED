@@ -642,9 +642,9 @@ void RTSPRequestInterface::WriteStandardHeaders() {
                 fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", fFilePath + 1);
 #endif           
             DateBuffer theDate;
-            UnRegisterAndSendMQAndDelete(fFilePath+1);
             DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. Stop MQ sent. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. Send Stop MQ. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            UnRegisterAndSendMQAndDelete(fFilePath+1);
             
         }
     }

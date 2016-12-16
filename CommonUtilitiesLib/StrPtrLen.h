@@ -138,6 +138,7 @@ public:
             return FindNextChar(target, pos - Ptr);
         }
         char* GetEnd() const {return Ptr + Len - 1;}
+        void PrintToStderr(void) const;
         
 #if STRPTRLENTESTING
 	static Bool16   Test();

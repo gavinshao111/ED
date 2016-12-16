@@ -27,13 +27,15 @@ git add EasyDarwin/startUp*
 
 # git add MqForEasyD/GetSession.h
 
-# git add MqForEasyD/mainProcess.cpp
-# git add MqForEasyD/mainProcess.h
+git add MqForEasyD/mainProcess.cpp
+git add MqForEasyD/mainProcess.h
 # git add MqForEasyD/strlfunc.cpp
 # git add MqForEasyD/strlfunc.h
 # git add MqForEasyD/Buildit.sh
 git add MqForEasyD/emqtt.key
 git add MqForEasyD/emqtt.pem
+git add emqtt.key
+git add emqtt.pem
 # git add MqForEasyD/testFile.cpp
 
 # git add MqForEasyD/MQTest/*.cpp

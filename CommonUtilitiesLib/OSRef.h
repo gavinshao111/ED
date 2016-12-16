@@ -241,6 +241,11 @@ public:
         */
         bool IsKeyExistingInTable(StrPtrLen* inUniqueID);
 #endif
+        /*
+         * do Resolve and UnRegister togather in locked.
+         */
+        OSRef* ResolveAndUnRegister(StrPtrLen*  inString);
+        
 private:
 
 
