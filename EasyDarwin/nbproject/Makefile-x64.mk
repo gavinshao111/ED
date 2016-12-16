@@ -64,7 +64,6 @@ OBJECTFILES= \
 	${OBJECTDIR}/APIModules/QTSSReflectorModule/QTSSRelayModule.o \
 	${OBJECTDIR}/APIModules/QTSSReflectorModule/RCFSourceInfo.o \
 	${OBJECTDIR}/APIModules/QTSSReflectorModule/RTPSessionOutput.o \
-	${OBJECTDIR}/APIModules/QTSSReflectorModule/RTPSessionSaveOutput.o \
 	${OBJECTDIR}/APIModules/QTSSReflectorModule/RTSPSourceInfo.o \
 	${OBJECTDIR}/APIModules/QTSSReflectorModule/ReflectorSession.o \
 	${OBJECTDIR}/APIModules/QTSSReflectorModule/ReflectorStream.o \
@@ -314,11 +313,6 @@ ${OBJECTDIR}/APIModules/QTSSReflectorModule/RTPSessionOutput.o: APIModules/QTSSR
 	${MKDIR} -p ${OBJECTDIR}/APIModules/QTSSReflectorModule
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -DCOMMON_UTILITIES_LIB -DDSS_USE_API_CALLBACKS -D_REENTRANT -D__USE_POSIX -D__linux__ -I../HTTPUtilitiesLib -I../CommonUtilitiesLib -IServer.tproj -IQTFileLib/ -IRTPMetaInfoLib/ -IPrefsSourceLib/ -IAPIStubLib/ -IAPICommonCode/ -IRTCPUtilitiesLib/ -IRTSPClientLib/ -IAPIModules/QTSSFileModule/ -IAPIModules/QTSSHttpFileModule/ -IAPIModules/QTSSAccessModule/ -IAPIModules/QTSSAccessLogModule/ -IAPIModules/QTSSPOSIXFileSysModule -IAPIModules/QTSSAdminModule/ -IAPIModules/QTSSReflectorModule/ -IAPIModules/QTSSWebStatsModule/ -IAPIModules/QTSSWebDebugModule/ -IAPIModules/QTSSFlowControlModule/ -IAPIModules/QTSSMP3StreamingModule/ -IAPIModules/EasyHLSModule -IAPIModules/EasyRelayModule -IInclude -I. -I../Include -I../EasyProtocol/Include -I../EasyProtocol/jsoncpp/include -IAPIModules/EasyCMSModule -IAPIModules/EasyRedisModule -I../EasyRedisClient -IRTSPReqInfo -I../paho.mqtt.c/src -include ../Include/PlatformHeader.h -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/APIModules/QTSSReflectorModule/RTPSessionOutput.o APIModules/QTSSReflectorModule/RTPSessionOutput.cpp
-
-${OBJECTDIR}/APIModules/QTSSReflectorModule/RTPSessionSaveOutput.o: APIModules/QTSSReflectorModule/RTPSessionSaveOutput.cpp
-	${MKDIR} -p ${OBJECTDIR}/APIModules/QTSSReflectorModule
-	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -DCOMMON_UTILITIES_LIB -DDSS_USE_API_CALLBACKS -D_REENTRANT -D__USE_POSIX -D__linux__ -I../HTTPUtilitiesLib -I../CommonUtilitiesLib -IServer.tproj -IQTFileLib/ -IRTPMetaInfoLib/ -IPrefsSourceLib/ -IAPIStubLib/ -IAPICommonCode/ -IRTCPUtilitiesLib/ -IRTSPClientLib/ -IAPIModules/QTSSFileModule/ -IAPIModules/QTSSHttpFileModule/ -IAPIModules/QTSSAccessModule/ -IAPIModules/QTSSAccessLogModule/ -IAPIModules/QTSSPOSIXFileSysModule -IAPIModules/QTSSAdminModule/ -IAPIModules/QTSSReflectorModule/ -IAPIModules/QTSSWebStatsModule/ -IAPIModules/QTSSWebDebugModule/ -IAPIModules/QTSSFlowControlModule/ -IAPIModules/QTSSMP3StreamingModule/ -IAPIModules/EasyHLSModule -IAPIModules/EasyRelayModule -IInclude -I. -I../Include -I../EasyProtocol/Include -I../EasyProtocol/jsoncpp/include -IAPIModules/EasyCMSModule -IAPIModules/EasyRedisModule -I../EasyRedisClient -IRTSPReqInfo -I../paho.mqtt.c/src -include ../Include/PlatformHeader.h -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/APIModules/QTSSReflectorModule/RTPSessionSaveOutput.o APIModules/QTSSReflectorModule/RTPSessionSaveOutput.cpp
 
 ${OBJECTDIR}/APIModules/QTSSReflectorModule/RTSPSourceInfo.o: APIModules/QTSSReflectorModule/RTSPSourceInfo.cpp
 	${MKDIR} -p ${OBJECTDIR}/APIModules/QTSSReflectorModule
