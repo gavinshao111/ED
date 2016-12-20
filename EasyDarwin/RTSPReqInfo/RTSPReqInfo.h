@@ -92,6 +92,10 @@ public:
     PushInfo();
     virtual ~PushInfo();
     
+    /*
+     * rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
+     * rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
+     */
     bool parsePushInfo(const StrPtrLen& src);
     
     OSRef* GetRef() { return &fRef; }
@@ -136,6 +140,8 @@ private:
      * 1 -> false -> SD
      */
     bool isHD;
+    
+    StrPtrLen startTime;
     
     OSMutex fMutex;
     OSCond  fCond;

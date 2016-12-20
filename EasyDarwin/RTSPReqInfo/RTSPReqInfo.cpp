@@ -19,7 +19,7 @@ extern "C"{
 const char *strClientIdForMQ = "EasyDarwin";
 const char *strMQServerAddress = "ssl://120.27.188.84:8883";
 
-const int timeToWaitForPush = 4;
+const int timeToWaitForPush = 8;
 const int timeOutForSendMQ = 4;
 const char *strCarUserAgent = "LeapMotor Push v1.0";
 char *strUserAgent = "User-Agent:";
@@ -30,6 +30,7 @@ OSMutex* PushInfo::fMutexForSendMQ = NULL;
 namespace NMSRTSPReqInfo{
     size_t strlcat(char *dst, const char *src, size_t siz);
     size_t strlcpy(char *dst, const char *src, size_t siz);
+    bool isDigital(StrPtrLen& src);
 }
 void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     if (NULL == req.Ptr || req.Len < 1) {
@@ -61,13 +62,13 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         if (NULL == pushInfoRef) {
             pushInfo = new PushInfo();
             DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[DEBUG] %.*s: PushInfo created: %p %s TID: %lu\n\n", 
-                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+//            fprintf(stderr, "[DEBUG] %.*s: PushInfo created: %p %s TID: %lu\n\n", 
+//                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             if (!pushInfo->parsePushInfo(rtspReqInfo->fullUrl)) {
                 fprintf(stderr, "[ERROR] pushInfo->parsePushInfo fail. filePath: %.*s\n\n", rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr);
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
-                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+//                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
+//                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 delete rtspReqInfo;
                 return;
@@ -77,37 +78,31 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
                 fprintf(stderr, "[ERROR] Register fail, key: %.*s\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
-                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+//                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
+//                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 delete rtspReqInfo;
                 return;
             }
-            fprintf(stderr, "[DEBUG] Register successful, key: %.*s\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
+            //fprintf(stderr, "[DEBUG] Register successful, key: %.*s\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
 
         } else { // may another app with same url is waiting, may push has arrived.
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
-            //fprintf(stderr, "[DEBUG] PushInfo existing. key: %.*s\n\n", rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr);
-//            fprintf(stderr, "[DEBUG] PushInfo existing. key: %.*s\npushInfo: isPushArrived: %d, ",
-//                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, pushInfo->isPushArrived);
-//            pushInfo->filePath.PrintToStderr();
-//            fprintf(stderr, "\n\n");
         }
 
         if (MotorOption){
             pushInfo->isPushArrived = true;
             pushInfo->notifyAppThatPushIsArrived();
-            // fprintf(stderr, "[DEBUG] MotorOption: isPushArrived: %d, addr of isPushArrived: %p\n\n", pushInfo->isPushArrived, &pushInfo->isPushArrived);
         } else if (!pushInfo->isPushArrived) {
             pushInfo->sendBeginOrStopMq(true);
-            if (pushInfo->waitForPushArrived(timeToWaitForPush))
+            if (pushInfo->waitForPushArrived(timeToWaitForPush)){
                 usleep(1000 * 100); // at this time, motor and app are all in option, we delay app to let motor setup first.
+            }
             else {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds) %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 // pushInfo will be delete in RTSPRequestInterface::WriteStandardHeaders(desc return 404).
             }
-            //fprintf(stderr, "[DEBUG] AppOption wake up: isPushArrived: %d, addr of isPushArrived: %p\n\n", pushInfo->isPushArrived, &pushInfo->isPushArrived);
         }
     }
 
@@ -117,7 +112,6 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 void UnRegisterAndSendMQAndDelete(char *key) {
     DateBuffer theDate;
     
-    //fprintf(stderr, "[DEBUG] UnRegisterAndSendMQAndDelete\n\n");
     OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
     if (NULL == rtspReqInfoTable) {
         fprintf(stderr, "[ERROR] UnRegisterAndSendMQAndDelete: rtspReqInfoTable == NULL.\n\n");
@@ -138,10 +132,9 @@ void UnRegisterAndSendMQAndDelete(char *key) {
     //fprintf(stderr, "[DEBUG] %.*s: Stop MQ sent. %s TID: %lu\n\n", fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
     DateTranslator::UpdateDateBuffer(&theDate, 0);
-    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+//    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
+//            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     delete pushInfo;
-    //fprintf(stderr, "[DEBUG] UnRegisterAndSendMQAndDelete.UnRegister and deleted, key: %.*s\n\n", fullFileName.Len, fullFileName.Ptr);
 }
 
 /*
@@ -156,10 +149,7 @@ RTSPReqInfo::RTSPReqInfo(const StrPtrLen& completeRequest) {
 RTSPReqInfo::RTSPReqInfo(const RTSPReqInfo& orig) {
 }
 
-RTSPReqInfo::~RTSPReqInfo() {
-    // tmp
-    //filePath.Delete();
-}
+RTSPReqInfo::~RTSPReqInfo() {}
 
 /*
  * app: 
@@ -277,7 +267,7 @@ void PushInfo::sendBeginOrStopMq(bool isBegin) {
     if (!PublishMq() && !PublishMq())
         fprintf(stderr, "[ERROR] publishMq fail.\n");
     else
-        fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
+        ;//fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
 }
 
 /*
@@ -287,26 +277,25 @@ void PushInfo::sendBeginOrStopMq(bool isBegin) {
  * false for timeout
  */
 bool PushInfo::waitForPushArrived(const int& timeToWaitForPush) {
-    DateBuffer theDate;
-    DateTranslator::UpdateDateBuffer(&theDate, 0);
-
-    fprintf(stderr, "waitForPushArrived with timeToWaitForPush = %d %s TID: %lu\n\n", timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+    struct timeval s_time, e_time;
+    gettimeofday(&s_time, NULL);
 
     OSMutexLocker locker(&fMutex);
     fCond.Wait(&fMutex, timeToWaitForPush * 1000);
+    
+    gettimeofday(&e_time, NULL);
+            
+    long timeDiff = e_time.tv_sec*10 + e_time.tv_usec/100000 - s_time.tv_sec*10 - s_time.tv_usec/100000;
+    //fprintf(stderr, "%ld %ld %ld %ld time diff: %ld\n\n", s_time.tv_sec, s_time.tv_usec, e_time.tv_sec, e_time.tv_usec, timeDiff);
+    
+    // assert timeToWaitForPush is 8s, if timeDiff > 7.8s, we regard it as time out.
+    if (timeDiff > (timeToWaitForPush * 10 - 2))
+        return false;
 
-    DateTranslator::UpdateDateBuffer(&theDate, 0);
-
-    fprintf(stderr, "waitForPushArrived wait return. %s TID: %lu\n\n", theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     return true;
 }
 
 void PushInfo::notifyAppThatPushIsArrived(void) {
-//    DateBuffer theDate;
-//    DateTranslator::UpdateDateBuffer(&theDate, 0);
-//
-//    fprintf(stderr, "notifyAppThatPushIsArrived %s TID: %lu\n\n", theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-
     OSMutexLocker locker(&fMutex);
     fCond.Broadcast();
 }
@@ -329,6 +318,10 @@ PushInfo::~PushInfo() {
     delete MQPayLoad.Ptr;
 }
 
+/*
+ * rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
+ * rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
+ */
 bool PushInfo::parsePushInfo(const StrPtrLen& src) {
     fullUrl.AllocateAndCopy(src);
     if (src.Ptr == NULL || src.Len < 1)
@@ -363,10 +356,16 @@ bool PushInfo::parsePushInfo(const StrPtrLen& src) {
         isHD = true;
     else if (*pos == '1')
         isHD = false;
-    else return false;
-
+    else return false;    
     if (*(++pos) != '/') return false;
-
+    
+    if (!isRealtime) {
+        startTime.Ptr = ++pos;
+        if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
+        startTime.Len = pos - startTime.Ptr;
+        if (!NMSRTSPReqInfo::isDigital(startTime)) return false;
+    }
+    
     return true;
 }
 
@@ -391,7 +390,12 @@ void PushInfo::toMQPayLoad(const bool& isBegin) {
         else
             NMSRTSPReqInfo::strlcat(strPayLoad, "SD", maxPayLoadLen);
         //}
-
+        
+        if (!isRealtime) {
+            NMSRTSPReqInfo::strlcat(strPayLoad, "\",\"CurrentTime\":\"", maxPayLoadLen);
+            strncat(strPayLoad, startTime.Ptr, startTime.Len);
+        }
+        
         NMSRTSPReqInfo::strlcat(strPayLoad, "\",\"Operation\":\"", maxPayLoadLen);
         if (isBegin)
             NMSRTSPReqInfo::strlcat(strPayLoad, "Begin\"", maxPayLoadLen);
@@ -538,4 +542,15 @@ size_t NMSRTSPReqInfo::strlcpy(char *dst, const char *src, size_t siz) {
     }
 
     return (s - src - 1); /* count does not include NUL */
+}
+
+bool NMSRTSPReqInfo::isDigital(StrPtrLen& src) {
+    if (src.Len == 0 || src.Ptr == NULL)
+        return false;
+    
+    for (int i = 0; src.Len > i; i++)
+        if ('0' > src[i] || '9' < src[i])
+            return false;
+    
+    return true;
 }

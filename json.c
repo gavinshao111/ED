@@ -1,3 +1,15 @@
+realtime:
+	rtsp://ip:port/realtime/$MotorId/$VideoType/realtime.sdp
+	like rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
+record:
+	rtsp://ip:Port/record/$MotorId/$VideoType/$StartTime/$FileName.sdp
+	Unit of $StartTime is second.
+	
+	like rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
+	
+	
+	$VideoType is '0' for HD or '1' for SD
+
 {"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp","VideoType":"SD","Operation":"Begin","Datetime":"1480735266671"}
 
 {"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp","VideoType":"","Operation":"Stop","Datetime":"1480735281212"}
