@@ -17,7 +17,7 @@ extern "C"{
 #define MAXPATHLEN 100
 #endif
 const char *strClientIdForMQ = "EasyDarwin";
-const char *strMQServerAddress = "ssl://120.27.188.84:8883";
+const char *strMQServerAddress = "ssl://120.26.86.124:8883";
 
 const int timeToWaitForPush = 8;
 const int timeOutForSendMQ = 4;
