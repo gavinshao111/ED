@@ -96,7 +96,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         } else if (!pushInfo->isPushArrived) {
             pushInfo->sendBeginOrStopMq(true);
             if (pushInfo->waitForPushArrived(timeToWaitForPush)){
-                usleep(1000 * 100); // at this time, motor and app are all in option, we delay app to let motor setup first.
+                usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             }
             else {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
