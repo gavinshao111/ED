@@ -8,9 +8,9 @@
 #if USEMQFORED
 #include "../../MqForEasyD/mainProcess.h"
 #else
-extern "C"{
-    #include "MQTTAsync.h"
-    #include "MQTTClient.h"
+extern "C" {
+#include "MQTTAsync.h"
+#include "MQTTClient.h"
 }
 
 #define MQTTCLIENT_PERSISTENCE_NONE 1
@@ -27,11 +27,12 @@ const int maxPayLoadLen = 2000;
 const int maxTopicLen = 500;
 
 OSMutex* PushInfo::fMutexForSendMQ = NULL;
-namespace NMSRTSPReqInfo{
+namespace NMSRTSPReqInfo {
     size_t strlcat(char *dst, const char *src, size_t siz);
     size_t strlcpy(char *dst, const char *src, size_t siz);
     bool isDigital(StrPtrLen& src);
 }
+
 void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     if (NULL == req.Ptr || req.Len < 1) {
         fprintf(stderr, "[ERROR] parseAndRegisterAndSendBeginMQAndWait: req invalid.\n\n");
@@ -54,21 +55,23 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     OSRef* pushInfoRef;
     PushInfo* pushInfo;
 
+    // the thread deal app option and deal motor setup is the same one, so block app option until motor setup is not work
     bool MotorOption = rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == option;
+    bool MotorAnnounce = rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == announce;
     bool AppOption = !rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == option;
 
-    if (MotorOption || AppOption) {
+    if (MotorAnnounce || AppOption) {
         pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo->filePath);
         if (NULL == pushInfoRef) {
             pushInfo = new PushInfo();
             DateTranslator::UpdateDateBuffer(&theDate, 0);
-//            fprintf(stderr, "[DEBUG] %.*s: PushInfo created: %p %s TID: %lu\n\n", 
-//                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            //            fprintf(stderr, "[DEBUG] %.*s: PushInfo created: %p %s TID: %lu\n\n", 
+            //                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             if (!pushInfo->parsePushInfo(rtspReqInfo->fullUrl)) {
                 fprintf(stderr, "[ERROR] pushInfo->parsePushInfo fail. filePath: %.*s\n\n", rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr);
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
-//                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-//                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
+                //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 delete rtspReqInfo;
                 return;
@@ -78,8 +81,8 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
                 fprintf(stderr, "[ERROR] Register fail, key: %.*s\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
-//                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-//                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
+                //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 delete rtspReqInfo;
                 return;
@@ -90,15 +93,14 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
         }
 
-        if (MotorOption){
+        if (MotorAnnounce) {
             pushInfo->isPushArrived = true;
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
             pushInfo->sendBeginOrStopMq(true);
-            if (pushInfo->waitForPushArrived(timeToWaitForPush)){
-                usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
-            }
-            else {
+            if (pushInfo->waitForPushArrived(timeToWaitForPush)) {
+                usleep(1000 * 100); // at this time, motor and app are all in option, we delay app to let motor setup first.
+            } else {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds) %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 // pushInfo will be delete in RTSPRequestInterface::WriteStandardHeaders(desc return 404).
@@ -111,7 +113,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 
 void UnRegisterAndSendMQAndDelete(char *key) {
     DateBuffer theDate;
-    
+
     OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
     if (NULL == rtspReqInfoTable) {
         fprintf(stderr, "[ERROR] UnRegisterAndSendMQAndDelete: rtspReqInfoTable == NULL.\n\n");
@@ -127,13 +129,13 @@ void UnRegisterAndSendMQAndDelete(char *key) {
 
     PushInfo* pushInfo = (PushInfo*) pushInfoRef->GetObject();
     pushInfo->sendBeginOrStopMq(false);
-    
+
     //DateTranslator::UpdateDateBuffer(&theDate, 0);
     //fprintf(stderr, "[DEBUG] %.*s: Stop MQ sent. %s TID: %lu\n\n", fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
     DateTranslator::UpdateDateBuffer(&theDate, 0);
-//    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-//            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+    //    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
+    //            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     delete pushInfo;
 }
 
@@ -149,12 +151,14 @@ RTSPReqInfo::RTSPReqInfo(const StrPtrLen& completeRequest) {
 RTSPReqInfo::RTSPReqInfo(const RTSPReqInfo& orig) {
 }
 
-RTSPReqInfo::~RTSPReqInfo() {}
+RTSPReqInfo::~RTSPReqInfo() {
+}
 
 /*
- * app: 
+ * OPTIONS rtsp://192.168.43.201:8888/record/1234/1/abc.sdp RTSP/1.0\r\n...
  * SETUP rtsp://10.34.16.127:8888/realtime/1234/1/realtime.sdp/trackID=0 RTSP/1.0\r\n
  * PLAY rtsp://10.34.16.127:8888/realtime/1234/1/realtime.sdp/
+ * ANNOUNCE rtsp://10.34.16.127:8888/realtime/1234/1/realtime.sdp RTSP/1.0\r\n
  * 
  */
 void RTSPReqInfo::parseReqAndPrint(void) {
@@ -213,8 +217,7 @@ void RTSPReqInfo::parseReqAndPrint(void) {
     char* posOfFilePathEnd;
 
     do {
-        // OPTIONS rtsp://192.168.43.201:8888/record/1234/1/abc.sdp RTSP/1.0\r\n...
-        if (RTSPType == option) {
+        if (RTSPType == option || RTSPType == announce) {
             if ((pos = completeRequest.FindNextChar(' ')) == NULL) break;
 
             fullUrl.Ptr = ++pos;
@@ -223,13 +226,13 @@ void RTSPReqInfo::parseReqAndPrint(void) {
 
             // get / before record
             if ((pos = completeRequest.FindNextChar('/', pos + 7)) == NULL) break;
-            fullUrl.Len = pos - fullUrl.Ptr;
-            if ((posOfFilePathEnd = completeRequest.FindNextChar(' ', ++pos)) == NULL) break;
+            pos++;
+
+            if ((posOfFilePathEnd = completeRequest.FindString(".sdp")) == NULL) break;
+            posOfFilePathEnd += 4;
+            
             filePath.Set(pos, posOfFilePathEnd - pos);
             fullUrl.Len = posOfFilePathEnd - fullUrl.Ptr;
-
-            // expect end with .sdp
-            if (0 != strncmp(filePath.GetEnd() - 3, ".sdp", 4)) break;
         }
 
         if ((pos = completeRequest.FindString(strUserAgent)) == NULL) break;
@@ -263,11 +266,11 @@ void PushInfo::readyToAddToTable(void) {
 void PushInfo::sendBeginOrStopMq(bool isBegin) {
     toMQPayLoad(isBegin);
     OSMutexLocker locker(fMutexForSendMQ);
-    
+
     if (!PublishMq() && !PublishMq())
         fprintf(stderr, "[ERROR] publishMq fail.\n");
     else
-        ;//fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
+        ; //fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
 }
 
 /*
@@ -282,12 +285,12 @@ bool PushInfo::waitForPushArrived(const int& timeToWaitForPush) {
 
     OSMutexLocker locker(&fMutex);
     fCond.Wait(&fMutex, timeToWaitForPush * 1000);
-    
+
     gettimeofday(&e_time, NULL);
-            
-    long timeDiff = e_time.tv_sec*10 + e_time.tv_usec/100000 - s_time.tv_sec*10 - s_time.tv_usec/100000;
+
+    long timeDiff = e_time.tv_sec * 10 + e_time.tv_usec / 100000 - s_time.tv_sec * 10 - s_time.tv_usec / 100000;
     //fprintf(stderr, "%ld %ld %ld %ld time diff: %ld\n\n", s_time.tv_sec, s_time.tv_usec, e_time.tv_sec, e_time.tv_usec, timeDiff);
-    
+
     // assert timeToWaitForPush is 8s, if timeDiff > 7.8s, we regard it as time out.
     if (timeDiff > (timeToWaitForPush * 10 - 2))
         return false;
@@ -356,16 +359,16 @@ bool PushInfo::parsePushInfo(const StrPtrLen& src) {
         isHD = true;
     else if (*pos == '1')
         isHD = false;
-    else return false;    
+    else return false;
     if (*(++pos) != '/') return false;
-    
+
     if (!isRealtime) {
         startTime.Ptr = ++pos;
         if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
         startTime.Len = pos - startTime.Ptr;
         if (!NMSRTSPReqInfo::isDigital(startTime)) return false;
     }
-    
+
     return true;
 }
 
@@ -390,12 +393,12 @@ void PushInfo::toMQPayLoad(const bool& isBegin) {
         else
             NMSRTSPReqInfo::strlcat(strPayLoad, "SD", maxPayLoadLen);
         //}
-        
+
         if (!isRealtime) {
             NMSRTSPReqInfo::strlcat(strPayLoad, "\",\"CurrentTime\":\"", maxPayLoadLen);
             strncat(strPayLoad, startTime.Ptr, startTime.Len);
         }
-        
+
         NMSRTSPReqInfo::strlcat(strPayLoad, "\",\"Operation\":\"", maxPayLoadLen);
         if (isBegin)
             NMSRTSPReqInfo::strlcat(strPayLoad, "Begin\"", maxPayLoadLen);
@@ -405,12 +408,12 @@ void PushInfo::toMQPayLoad(const bool& isBegin) {
         NMSRTSPReqInfo::strlcat(strPayLoad, ",\"Datetime\":\"", maxPayLoadLen);
         struct timeval s_time;
         gettimeofday(&s_time, NULL);
-        
+
         sprintf(strPayLoad + strlen(strPayLoad), "%ld\"}", ((long) s_time.tv_sec)*1000 + (long) s_time.tv_usec / 1000);
         MQPayLoad.Set(strPayLoad);
-    } else {    // MQ existing, we only need modify Operation.
+    } else { // MQ existing, we only need modify Operation.
         char* pos = MQPayLoad.FindString("Operation\":\"");
-        if (pos == NULL){
+        if (pos == NULL) {
             fprintf(stderr, "[ERROR] PushInfo::toMQPayLoad can't find Operation in existing MQ.\n\n");
             return;
         }
@@ -424,11 +427,11 @@ void PushInfo::toMQPayLoad(const bool& isBegin) {
 }
 
 bool PushInfo::PublishMq() const {
-    char Topic[maxTopicLen] = {0};    
+    char Topic[maxTopicLen] = {0};
     snprintf(Topic, maxTopicLen - 1, "/%.*s/videoinfoAsk", clientId.Len, clientId.Ptr);
 #if USEMQFORED    
     int rc = publishMq(strMQServerAddress, "EasyDarwin", Topic, MQPayLoad.Ptr, timeOutForSendMQ);
-    if (0 != rc){
+    if (0 != rc) {
         fprintf(stderr, "publishMq fail, return code: %d\n", rc);
         return false;
     }
@@ -441,8 +444,7 @@ bool PushInfo::PublishMq() const {
     MQTTClient_deliveryToken token;
 
     if (rc = MQTTClient_create(&client, strMQServerAddress, "EasyDarwin",
-            MQTTCLIENT_PERSISTENCE_NONE, NULL) != MQTTCLIENT_SUCCESS)
-    {
+            MQTTCLIENT_PERSISTENCE_NONE, NULL) != MQTTCLIENT_SUCCESS) {
         fprintf(stderr, "Failed to create MQTTClient, return code %d\n", rc);
         return false;
     }
@@ -457,31 +459,29 @@ bool PushInfo::PublishMq() const {
     snprintf(pathOfPrivateKey, MAXPATHLEN - 1, "%s/emqtt.key", getenv("ED"));
     snprintf(pathOfServerPublicKey, MAXPATHLEN - 1, "%s/emqtt.pem", getenv("ED"));
     MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;
-       
+
     ssl_opts.trustStore = pathOfServerPublicKey;
     ssl_opts.keyStore = pathOfServerPublicKey;
-    ssl_opts.privateKey = pathOfPrivateKey;   
+    ssl_opts.privateKey = pathOfPrivateKey;
     ssl_opts.enableServerCertAuth = 0;
     conn_opts.ssl = &ssl_opts;
 #endif
 
-    
-    if (rc = MQTTClient_connect(client, &conn_opts) != MQTTCLIENT_SUCCESS)
-    {
+
+    if (rc = MQTTClient_connect(client, &conn_opts) != MQTTCLIENT_SUCCESS) {
         fprintf(stderr, "Failed to connect to MQ server, return code %d\n", rc);
         return false;
     }
-    pubmsg.payload = (void *)MQPayLoad.Ptr;
+    pubmsg.payload = (void *) MQPayLoad.Ptr;
     pubmsg.payloadlen = MQPayLoad.Len;
     pubmsg.qos = 1;
     pubmsg.retained = 0;
-    
+
     // fprintf(stderr, "[DEBUG] send MQ with topic: %s, PayLoad: ", Topic);
     // MQPayLoad.PrintToStderr();
     // fprintf(stderr, "\n\n");
-    
-    if (rc = MQTTClient_publishMessage(client, Topic, &pubmsg, &token) != MQTTCLIENT_SUCCESS)
-    {
+
+    if (rc = MQTTClient_publishMessage(client, Topic, &pubmsg, &token) != MQTTCLIENT_SUCCESS) {
         fprintf(stderr, "Failed to publishMessage to MQ server, return code %d\n", rc);
         return false;
     }
@@ -547,10 +547,10 @@ size_t NMSRTSPReqInfo::strlcpy(char *dst, const char *src, size_t siz) {
 bool NMSRTSPReqInfo::isDigital(StrPtrLen& src) {
     if (src.Len == 0 || src.Ptr == NULL)
         return false;
-    
+
     for (int i = 0; src.Len > i; i++)
         if ('0' > src[i] || '9' < src[i])
             return false;
-    
+
     return true;
 }
