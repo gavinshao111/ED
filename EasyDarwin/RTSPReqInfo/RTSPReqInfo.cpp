@@ -99,7 +99,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         } else if (!pushInfo->isPushArrived) {
             pushInfo->sendBeginOrStopMq(true);
             if (pushInfo->waitForPushArrived(timeToWaitForPush)) {
-                usleep(1000 * 100); // at this time, motor and app are all in option, we delay app to let motor setup first.
+                usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds) %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
@@ -123,7 +123,7 @@ void UnRegisterAndSendMQAndDelete(char *key) {
     StrPtrLen fullFileName(key);
     OSRef* pushInfoRef = rtspReqInfoTable->ResolveAndUnRegister(&fullFileName);
     if (NULL == pushInfoRef) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.
-        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", fullFileName.Len, fullFileName.Ptr);
+//        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", fullFileName.Len, fullFileName.Ptr);
         return;
     }
 
