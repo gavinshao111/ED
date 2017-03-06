@@ -643,7 +643,7 @@ void RTSPRequestInterface::WriteStandardHeaders() {
 #endif           
             DateBuffer theDate;
             DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. Send Stop MQ. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. Send Stop MQ. %s TID: %lu\n\n\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             UnRegisterAndSendMQAndDelete(fFilePath+1);
             
         }
