@@ -97,7 +97,8 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             pushInfo->isPushArrived = true;
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
-            pushInfo->sendBeginOrStopMq(true);
+            if (NULL == pushInfoRef)    // 已注册但推流未到达时不再发送BeginMQ
+                pushInfo->sendBeginOrStopMq(true);
             if (pushInfo->waitForPushArrived(timeToWaitForPush)) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
