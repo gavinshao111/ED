@@ -550,7 +550,7 @@ bool NMSRTSPReqInfo::isDigital(StrPtrLen& src) {
         return false;
 
     for (int i = 0; src.Len > i; i++)
-        if ('0' > src[i] || '9' < src[i])
+        if (('0' > src[i] || '9' < src[i]) && '.' != src[i])
             return false;
 
     return true;
