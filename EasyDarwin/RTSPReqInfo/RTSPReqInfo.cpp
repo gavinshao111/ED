@@ -60,7 +60,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     bool MotorAnnounce = rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == announce;
     bool AppOption = !rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == option;
 
-    if (MotorAnnounce || AppOption) {
+    if (MotorOption || AppOption) {
         pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo->filePath);
         if (NULL == pushInfoRef) {
             pushInfo = new PushInfo();
@@ -93,8 +93,10 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
         }
 
-        if (MotorAnnounce) {
+        if (MotorOption) {
             pushInfo->isPushArrived = true;
+            
+            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
             if (NULL == pushInfoRef)    // 已注册但推流未到达时不再发送BeginMQ
@@ -106,6 +108,8 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds) %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 // pushInfo will be delete in RTSPRequestInterface::WriteStandardHeaders(desc return 404).
             }
+        } else {    // AppOption && PushArrived
+            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived is true, app thread will continue. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
     }
 
