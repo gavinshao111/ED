@@ -272,10 +272,10 @@ void PushInfo::sendBeginOrStopMq(bool isBegin) {
     toMQPayLoad(isBegin);
     OSMutexLocker locker(fMutexForSendMQ);
 
-    if (!PublishMq() && !PublishMq())
+    if (!PublishMq() && !PublishMq())   // 最多重发两次
         fprintf(stderr, "[ERROR] publishMq fail.\n");
     else
-        ; //fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
+        fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
 }
 
 /*
