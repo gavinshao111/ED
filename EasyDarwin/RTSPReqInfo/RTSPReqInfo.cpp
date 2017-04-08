@@ -65,8 +65,8 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         if (NULL == pushInfoRef) {
             pushInfo = new PushInfo();
             DateTranslator::UpdateDateBuffer(&theDate, 0);
-            //            fprintf(stderr, "[DEBUG] %.*s: PushInfo created: %p %s TID: %lu\n\n", 
-            //                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[DEBUG] %.*s: PushInfo created. %s TID: %lu\n\n",
+                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             if (!pushInfo->parsePushInfo(rtspReqInfo->fullUrl)) {
                 fprintf(stderr, "[ERROR] pushInfo->parsePushInfo fail. filePath: %.*s\n\n", rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr);
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
@@ -91,16 +91,21 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 
         } else { // may another app with same url is waiting, may push has arrived.
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
+            fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
+                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
 
         if (MotorOption) {
             pushInfo->isPushArrived = true;
-            
+
             fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
-            if (NULL == pushInfoRef)    // 已注册但推流未到达时不再发送BeginMQ
+            fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            if (NULL == pushInfoRef) // 已注册但推流未到达时不再发送BeginMQ
                 pushInfo->sendBeginOrStopMq(true);
+            else
+                fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & 已注册. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             if (pushInfo->waitForPushArrived(timeToWaitForPush)) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
@@ -108,7 +113,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds) %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 // pushInfo will be delete in RTSPRequestInterface::WriteStandardHeaders(desc return 404).
             }
-        } else {    // AppOption && PushArrived
+        } else { // AppOption && PushArrived
             fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived is true, app thread will continue. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
     }
@@ -128,7 +133,7 @@ void UnRegisterAndSendMQAndDelete(char *key) {
     StrPtrLen fullFileName(key);
     OSRef* pushInfoRef = rtspReqInfoTable->ResolveAndUnRegister(&fullFileName);
     if (NULL == pushInfoRef) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.
-//        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", fullFileName.Len, fullFileName.Ptr);
+        //        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", fullFileName.Len, fullFileName.Ptr);
         return;
     }
 
@@ -235,7 +240,7 @@ void RTSPReqInfo::parseReqAndPrint(void) {
 
             if ((posOfFilePathEnd = completeRequest.FindString(".sdp")) == NULL) break;
             posOfFilePathEnd += 4;
-            
+
             filePath.Set(pos, posOfFilePathEnd - pos);
             fullUrl.Len = posOfFilePathEnd - fullUrl.Ptr;
         }
@@ -272,7 +277,7 @@ void PushInfo::sendBeginOrStopMq(bool isBegin) {
     toMQPayLoad(isBegin);
     OSMutexLocker locker(fMutexForSendMQ);
 
-    if (!PublishMq() && !PublishMq())   // 最多重发两次
+    if (!PublishMq() && !PublishMq()) // 最多重发两次
         fprintf(stderr, "[ERROR] publishMq fail.\n");
     else
         fprintf(stderr, "[DEBUG] MQ isBegin: %d sent.\n\n", isBegin);
