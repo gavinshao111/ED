@@ -35,6 +35,7 @@ public:
 
     StrPtrLen filePath;
     StrPtrLen fullUrl;
+    StrPtrLen vehicleId;
     
 
     /*
@@ -132,7 +133,7 @@ private:
      */
     bool isRealtime;
 
-    StrPtrLen clientId;
+    StrPtrLen vehicleId;
     StrPtrLen MQPayLoad;
 
     /*
