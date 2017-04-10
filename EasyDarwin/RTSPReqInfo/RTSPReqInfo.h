@@ -15,6 +15,7 @@ enum enumRTSPType {
 };
 
 void UnRegisterAndSendMQAndDelete(char *key);
+void UnRegisterAndSendMQAndDeleteIfNeed(char *key);
 void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
 
 class PushInfo;
