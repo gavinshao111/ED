@@ -118,15 +118,12 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             }
             fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
 
-        } else if (AppOption) { // may another app with same url is waiting, may push has arrived.
+        } else {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
-            fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
+            if (AppOption) // may another app with same url is waiting, may push has arrived.
+                fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
                     rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
-
-        fprintf(stderr, "[DEBUG] %.*s: get pushInfoRef done. %s TID: %lu\n\n",
-                pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-
 
         if (MotorOption) {
             pushInfo->isPushArrived = true;
