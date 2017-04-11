@@ -1,18 +1,18 @@
 realtime:
 	rtsp://ip:port/realtime/$MotorId/$VideoType/realtime.sdp
-	like rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
+	like rtsp://120.26.86.124:8888/realtime/1234/1/realtime.sdp
 record:
 	rtsp://ip:Port/record/$MotorId/$VideoType/$StartTime/$FileName.sdp
 	Unit of $StartTime is second.
 	
-	like rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
+	like record/FIRSTLPS0/1/0/2017-03-02_080956_0300.sdp
 	
 	
 	$VideoType is '0' for HD or '1' for SD
 
-{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp","VideoType":"SD","Operation":"Begin","Datetime":"1480735266671"}
+{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp","VideoType":"SD","Operation":"Begin","Datetime":"1480735266671"}
 
-{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp","VideoType":"","Operation":"Stop","Datetime":"1480735281212"}
+{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp","VideoType":"","Operation":"Stop","Datetime":"1480735281212"}
 
 EasyDarwin与车机MQTT的实时视频通讯JSON发送
 
@@ -56,17 +56,17 @@ EasyDarwin与车机MQTT的录像通讯JSON发送
 /1234/videoinfoAsk
 /carleapmotorCLOUDE20160727inform/videoinfoAsk
 realtime url:
-rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp
-rtsp://120.27.188.84:8888/realtime/$carleapmotorCLOUDE20160727inform/1/realtime.sdp
+rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp
+rtsp://120.26.86.124:8888/realtime/$carleapmotorCLOUDE20160727inform/1/realtime.sdp
 
 record
-rtsp://120.27.188.84:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp 
+rtsp://120.26.86.124:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp 
 
 
 test:
-rtsp://120.27.188.84:8888/realtime/$1234/1/realtime.sdp
+rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp
 rtsp://192.168.61.128:8888/realtime/$carleapmotorCLOUDE20160727inform/1/realtime.sdp
 
 play record in EasyDarwin:
-rtsp://120.27.188.84:8888/testAfterHint.mp4
-rtsp://120.27.188.84:8888/record/$phoneapptest/1/123.sdp
+rtsp://120.26.86.124:8888/testAfterHint.mp4
+rtsp://120.26.86.124:8888/record/$phoneapptest/1/123.sdp
