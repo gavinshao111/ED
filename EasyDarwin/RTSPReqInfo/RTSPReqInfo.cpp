@@ -74,7 +74,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     RTSPReqInfo rtspReqInfo(req);
     rtspReqInfo.parseReqAndPrint();
     if (rtspReqInfo.RTSPType == invaild) {
-        
+
         return;
     }
 
@@ -124,13 +124,17 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                     rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
 
+        fprintf(stderr, "[DEBUG] %.*s: get pushInfoRef done. %s TID: %lu\n\n",
+                pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+
+
         if (MotorOption) {
             pushInfo->isPushArrived = true;
-            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n", 
+            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n",
                     pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
-            fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived. %s TID: %lu\n\n", 
+            fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived. %s TID: %lu\n\n",
                     pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             if (NULL == pushInfoRef) // Î´×¢²á²Å·¢ËÍBeginMQ
                 pushInfo->sendBeginOrStopMq(true);
@@ -152,12 +156,12 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 delete pushInfo;
             }
         } else { // AppOption && PushArrived
-            fprintf(stderr, "[DEBUG] %.*s: AppOption & PushArrived, app option thread will continue. %s TID: %lu\n\n", 
+            fprintf(stderr, "[DEBUG] %.*s: AppOption & PushArrived, app option thread will continue. %s TID: %lu\n\n",
                     pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
     }
 
-    
+
 }
 
 void UnRegisterAndSendMQAndDelete(char *key) {
