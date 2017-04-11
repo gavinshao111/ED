@@ -146,11 +146,15 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                  * for bug2, 因为如果app自带超时提前返回，不会进入desc404的流程，所以需要在这里就释放资源；
                  * 若app不提前返回，在这里资源被释放，在进入desc404后，发现这个filePath未被注册，do nothing
                  */
-                rtspReqInfoTable->UnRegister(pushInfo->GetRef(), 0xffffffff);
+                fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.                    
+                    return;
+                }
                 pushInfo->sendBeginOrStopMq(false);
-                fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). PushInfo unregistered and deleted, stop MQ sent %s TID: %lu\n\n",
-                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
+                fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             }
         } else { // AppOption && PushArrived
             fprintf(stderr, "[DEBUG] %.*s: AppOption & PushArrived, app option thread will continue. %s TID: %lu\n\n",
