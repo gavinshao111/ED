@@ -1,4 +1,5 @@
 git add EasyDarwin/nbproject/Makefile-x64.mk
+git add EasyDarwin/nbproject/Makefile-Debug.mk
 #add public OSRefTable::IsKeyExistingInTable
 git add CommonUtilitiesLib/OSRef.cpp
 git add CommonUtilitiesLib/OSRef.h
