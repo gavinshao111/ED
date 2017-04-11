@@ -14,6 +14,7 @@
  * case1 车机没有推其他视频，app option timeout，然后后发送stopMQ,然后删除pushInfo实例
  * case2 车机正在推其他视频，基于bug1，当前app option 会立即返回404，不会有app自带超时返回的情况发生。
  * 
+ * req1:
  * 录像拖动：filePath 视频起始播放时间变化，其他不变。比如从0s快进到50s，app option需要等到上一个，即0s
  * 的视频线路结束后再继续发送下一个请求，即50s。
  * 等待条件：rtspReqInfoTable中存在除了起始播放时间不同的filePath
@@ -70,10 +71,10 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         return;
     }
 
-    RTSPReqInfo* rtspReqInfo = new RTSPReqInfo(req);
-    rtspReqInfo->parseReqAndPrint();
-    if (rtspReqInfo->RTSPType == invaild) {
-        delete rtspReqInfo;
+    RTSPReqInfo rtspReqInfo(req);
+    rtspReqInfo.parseReqAndPrint();
+    if (rtspReqInfo.RTSPType == invaild) {
+        
         return;
     }
 
@@ -81,27 +82,28 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     PushInfo* pushInfo;
 
     /* the thread deal app option and deal motor setup is the same one, so block app option until motor setup is not work
-     * the thread deal 
      */
-    bool MotorOption = rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == option;
-    bool MotorAnnounce = rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == announce;
-    bool AppOption = !rtspReqInfo->isFromLeapMotor && rtspReqInfo->RTSPType == option;
+    bool MotorOption = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
+    bool MotorAnnounce = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == announce;
+    bool AppOption = !rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
 
     if (MotorOption || AppOption) {
-        //        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo->filePath);
-        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo->vehicleId);
+        //        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.filePath);
+        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
         if (NULL == pushInfoRef) {
-            pushInfo = new PushInfo();
             DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[DEBUG] %.*s: PushInfo created. %s TID: %lu\n\n",
-                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            if (!pushInfo->parsePushInfo(rtspReqInfo->fullUrl)) {
-                fprintf(stderr, "[ERROR] pushInfo->parsePushInfo fail. filePath: %.*s\n\n", rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr);
+            if (MotorOption) {
+                fprintf(stderr, "[WARN] %.*s: MotorOption arrived, but there's no app wait for push. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                return;
+            }
+            pushInfo = new PushInfo();
+            if (!pushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
+                fprintf(stderr, "[ERROR] pushInfo->parsePushInfo fail. filePath: %.*s\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
                 //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
-                delete rtspReqInfo;
                 return;
             }
 
@@ -112,24 +114,24 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
                 //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
-                delete rtspReqInfo;
                 return;
             }
             fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
 
-        } else { // may another app with same url is waiting, may push has arrived.
+        } else if (AppOption) { // may another app with same url is waiting, may push has arrived.
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
             fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
-                    rtspReqInfo->filePath.Len, rtspReqInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
 
         if (MotorOption) {
             pushInfo->isPushArrived = true;
-
-            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n", 
+                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
-            fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived. %s TID: %lu\n\n", 
+                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             if (NULL == pushInfoRef) // 未注册才发送BeginMQ
                 pushInfo->sendBeginOrStopMq(true);
             else // 已注册但推流未到达时不再发送BeginMQ
@@ -138,23 +140,24 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
-                
+
                 /*
                  * for bug2, 因为如果app自带超时提前返回，不会进入desc404的流程，所以需要在这里就释放资源；
                  * 若app不提前返回，在这里资源被释放，在进入desc404后，发现这个filePath未被注册，do nothing
                  */
-                rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
+                rtspReqInfoTable->UnRegister(pushInfo->GetRef(), 0xffffffff);
                 pushInfo->sendBeginOrStopMq(false);
-                fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). PushInfo unregistered and deleted, stop MQ sent %s TID: %lu\n\n", 
+                fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). PushInfo unregistered and deleted, stop MQ sent %s TID: %lu\n\n",
                         pushInfo->filePath.Len, pushInfo->filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
             }
         } else { // AppOption && PushArrived
-            fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived is true, app thread will continue. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[DEBUG] %.*s: AppOption & PushArrived, app option thread will continue. %s TID: %lu\n\n", 
+                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
     }
 
-    delete rtspReqInfo;
+    
 }
 
 void UnRegisterAndSendMQAndDelete(char *key) {
