@@ -131,12 +131,13 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                     pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             pushInfo->notifyAppThatPushIsArrived();
         } else if (!pushInfo->isPushArrived) {
-            fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived. %s TID: %lu\n\n",
-                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            if (NULL == pushInfoRef) // 未注册才发送BeginMQ
+            if (NULL == pushInfoRef) { // 未注册才发送BeginMQ
+                fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & hasn't registered. %s TID: %lu\n\n",
+                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 pushInfo->sendBeginOrStopMq(true);
-            else // 已注册但推流未到达时不再发送BeginMQ
+            } else // 已注册但推流未到达时不再发送BeginMQ
                 fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & registered. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+
             if (pushInfo->waitForPushArrived(timeToWaitForPush)) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
@@ -149,16 +150,18 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.                    
+                    fprintf(stderr, "[INFO] %.*s: PushInfo already deleted, nothing to do. %s TID: %lu\n\n",
+                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                     return;
                 }
                 pushInfo->sendBeginOrStopMq(false);
                 delete pushInfo;
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             }
         } else { // AppOption && PushArrived
             fprintf(stderr, "[DEBUG] %.*s: AppOption & PushArrived, app option thread will continue. %s TID: %lu\n\n",
-                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
     }
 
@@ -194,8 +197,8 @@ void UnRegisterAndSendMQAndDelete(char *key) {
     //fprintf(stderr, "[DEBUG] %.*s: Stop MQ sent. %s TID: %lu\n\n", fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
     // DateTranslator::UpdateDateBuffer(&theDate, 0);
-    //    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
-    //            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n",
+            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     delete pushInfo;
 }
 
