@@ -14,8 +14,7 @@ enum enumRTSPType {
     option, describe, announce, setup, play, record, teardown, invaild
 };
 
-void UnRegisterAndSendMQAndDelete(char *key);
-void UnRegisterAndSendMQAndDeleteIfNeed(char *key);
+void UnRegisterAndSendMQAndDelete(char *key, bool needNotify = false);
 void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
 
 class PushInfo;
@@ -113,9 +112,9 @@ public:
      * true for receive push before timeout.
      * false for timeout
      */
-    bool waitForPushArrived(const int& timeToWaitForPush);
+    bool waitForNotification(const int& timeToWaitForPushArvd);
 
-    void notifyAppThatPushIsArrived(void);
+    void notifyApp(void);
     
     
 private:
@@ -144,6 +143,7 @@ private:
     bool isHD;
     
     StrPtrLen startTime;
+    StrPtrLen fileName;
     
     OSMutex fMutex;
     OSCond  fCond;
@@ -153,7 +153,8 @@ private:
     
     
     friend class RTSPReqInfo;
-};
+    friend void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
+    };
 
 
 #endif /* RTSPREQINFO_H */

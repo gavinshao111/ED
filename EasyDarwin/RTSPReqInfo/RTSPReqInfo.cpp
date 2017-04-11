@@ -45,7 +45,7 @@ extern "C" {
 const char *strClientIdForMQ = "EasyDarwin";
 const char *strMQServerAddress = "ssl://120.26.86.124:8883";
 
-const int timeToWaitForPush = 8;
+const int CTimeToWaitForPushArvd = 8;
 const int timeOutForSendMQ = 4;
 const char *strCarUserAgent = "LeapMotor Push v1.0";
 char *strUserAgent = "User-Agent:";
@@ -90,8 +90,8 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     if (MotorOption || AppOption) {
         //        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.filePath);
         pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
-        if (NULL == pushInfoRef) {
-            DateTranslator::UpdateDateBuffer(&theDate, 0);
+        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        if (NULL == pushInfoRef) { // 当前车机没有在推流，且在这之前没有其他app在等待当前车机播放
             if (MotorOption) {
                 fprintf(stderr, "[WARN] %.*s: MotorOption arrived, but there's no app wait for push. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
@@ -109,27 +109,72 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 
             pushInfo->readyToAddToTable();
             if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
-                fprintf(stderr, "[ERROR] Register fail, key: %.*s\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                fprintf(stderr, "[ERROR] Register fail, key: %.*s\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
+                //                DateTranslator::UpdateDateBuffer(&theDate, 0);
                 //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
                 //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 return;
             }
-            fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr);
+            fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
 
         } else {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
-            if (AppOption) // may another app with same url is waiting, may push has arrived.
-                fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
-                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            if (AppOption) { // may another app with same url is waiting, may push has arrived.
+
+                // req1: 已注册的pushInfo与当前请求，除播放时间不同外，其他都相同，则等待
+                PushInfo* currPushInfo = new PushInfo();
+                if (!currPushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
+                    fprintf(stderr, "[ERROR] %.*s: parsePushInfo fail.\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
+                    delete currPushInfo;
+                    return;
+                }
+                if (!pushInfo->isRealtime && !currPushInfo->isRealtime
+                        && pushInfo->isHD == currPushInfo->isHD
+                        && !pushInfo->startTime.Equal(currPushInfo->startTime)
+                        && pushInfo->fileName.Equal(currPushInfo->fileName)) {
+                    fprintf(stderr, "[DEBUG] %.*s: Video drag. %s TID: %lu\n\n",
+                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+
+                    bool r = pushInfo->waitForNotification(4);
+                    DateTranslator::UpdateDateBuffer(&theDate, 0);
+                    if (!r) {
+                        fprintf(stderr, "[WARN] %.*s: wait for Push finish timeout. %s TID: %lu\n\n",
+                                rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        delete currPushInfo;
+                        return;
+                    }
+                    fprintf(stderr, "[WARN] %.*s: Last push finished. %s TID: %lu\n\n",
+                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+
+                    // 此时pushInfo已在其他线程被删除UnRegister，需要重新生成并Register
+                    if (NULL != rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId)) {
+                        fprintf(stderr, "[ERROR] %.*s: Last PushInfo expected to be deleted in UnRegisterAndSendMQAndDelete() %s TID: %lu\n\n",
+                                rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        delete currPushInfo;
+                        return;
+                    }
+                    pushInfo = currPushInfo;
+                    pushInfo->readyToAddToTable();
+                    if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
+                        fprintf(stderr, "[ERROR] %.*s: Register fail\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
+                        delete pushInfo;
+                        return;
+                    }
+                    fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
+
+                } else
+                    fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            }
         }
 
+        DateTranslator::UpdateDateBuffer(&theDate, 0);
         if (MotorOption) {
             pushInfo->isPushArrived = true;
             fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n",
                     pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            pushInfo->notifyAppThatPushIsArrived();
+            pushInfo->notifyApp();
         } else if (!pushInfo->isPushArrived) {
             if (NULL == pushInfoRef) { // 未注册才发送BeginMQ
                 fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & hasn't registered. %s TID: %lu\n\n",
@@ -138,7 +183,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             } else // 已注册但推流未到达时不再发送BeginMQ
                 fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & registered. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
-            if (pushInfo->waitForPushArrived(timeToWaitForPush)) {
+            if (pushInfo->waitForNotification(CTimeToWaitForPushArvd)) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
@@ -148,7 +193,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                  * 若app不提前返回，在这里资源被释放，在进入desc404后，发现这个filePath未被注册，do nothing
                  */
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, timeToWaitForPush, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, CTimeToWaitForPushArvd, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.                    
                     fprintf(stderr, "[INFO] %.*s: PushInfo already deleted, nothing to do. %s TID: %lu\n\n",
                             rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
@@ -156,6 +201,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 }
                 pushInfo->sendBeginOrStopMq(false);
                 delete pushInfo;
+                DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             }
@@ -168,45 +214,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 
 }
 
-void UnRegisterAndSendMQAndDelete(char *key) {
-    DateBuffer theDate;
-
-    OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
-    if (NULL == rtspReqInfoTable) {
-        fprintf(stderr, "[ERROR] UnRegisterAndSendMQAndDelete: rtspReqInfoTable == NULL.\n\n");
-        return;
-    }
-
-    StrPtrLen fullFileName(key);
-    StrPtrLen vehicle;
-    //    char* p = 
-    vehicle.Ptr = fullFileName.FindNextChar('/') + 1;
-    vehicle.Len = fullFileName.FindNextChar('/', vehicle.Ptr) - vehicle.Ptr;
-
-    //    OSRef* pushInfoRef = rtspReqInfoTable->ResolveAndUnRegister(&fullFileName);
-    OSRef* pushInfoRef = rtspReqInfoTable->ResolveAndUnRegister(&vehicle);
-    if (NULL == pushInfoRef) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.
-        //        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", fullFileName.Len, fullFileName.Ptr);
-        return;
-    }
-
-    PushInfo* pushInfo = (PushInfo*) pushInfoRef->GetObject();
-    pushInfo->sendBeginOrStopMq(false);
-
-    //DateTranslator::UpdateDateBuffer(&theDate, 0);
-    //fprintf(stderr, "[DEBUG] %.*s: Stop MQ sent. %s TID: %lu\n\n", fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-
-    // DateTranslator::UpdateDateBuffer(&theDate, 0);
-    fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n",
-            pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-    delete pushInfo;
-}
-
-/**
- * 为了解决bug1
- * @param key
- */
-void UnRegisterAndSendMQAndDeleteIfNeed(char *key) {
+void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
     DateBuffer theDate;
 
     OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
@@ -227,8 +235,9 @@ void UnRegisterAndSendMQAndDeleteIfNeed(char *key) {
     }
 
     PushInfo* pushInfo = (PushInfo*) pushInfoRef->GetObject();
+    // for bug1
     if (!pushInfo->filePath.Equal(fullFileName)) {
-        fprintf(stderr, "[DEBUG] %.*s: This vehicle is pushing another url: %.*s. do nothing\n\n",
+        fprintf(stderr, "[DEBUG] %.*s: This vehicle is pushing another url: %.*s. Nothing to do\n\n",
                 fullFileName.Len, fullFileName.Ptr, pushInfo->filePath.Len, pushInfo->filePath.Ptr);
         return;
     }
@@ -236,10 +245,17 @@ void UnRegisterAndSendMQAndDeleteIfNeed(char *key) {
     rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
     pushInfo->sendBeginOrStopMq(false);
 
+    if (needNotify) {
+        pushInfo->notifyApp();
+        fprintf(stderr, "[DEBUG] %.*s: Push finished & notified. %s TID: %lu\n\n",
+                fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+    }
+
     delete pushInfo;
     DateTranslator::UpdateDateBuffer(&theDate, 0);
     fprintf(stderr, "[DEBUG] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
-            pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+
 }
 
 /*
@@ -391,12 +407,12 @@ void PushInfo::sendBeginOrStopMq(bool isBegin) {
  * true for receive push before timeout.
  * false for timeout
  */
-bool PushInfo::waitForPushArrived(const int& timeToWaitForPush) {
+bool PushInfo::waitForNotification(const int& timeToWaitForPushArvd) {
     struct timeval s_time, e_time;
     gettimeofday(&s_time, NULL);
 
     OSMutexLocker locker(&fMutex);
-    fCond.Wait(&fMutex, timeToWaitForPush * 1000);
+    fCond.Wait(&fMutex, timeToWaitForPushArvd * 1000);
 
     gettimeofday(&e_time, NULL);
 
@@ -404,13 +420,13 @@ bool PushInfo::waitForPushArrived(const int& timeToWaitForPush) {
     //fprintf(stderr, "%ld %ld %ld %ld time diff: %ld\n\n", s_time.tv_sec, s_time.tv_usec, e_time.tv_sec, e_time.tv_usec, timeDiff);
 
     // assert timeToWaitForPush is 8s, if timeDiff > 7.8s, we regard it as time out.
-    if (timeDiff > (timeToWaitForPush * 10 - 2))
+    if (timeDiff > (timeToWaitForPushArvd * 10 - 2))
         return false;
 
     return true;
 }
 
-void PushInfo::notifyAppThatPushIsArrived(void) {
+void PushInfo::notifyApp(void) {
     OSMutexLocker locker(&fMutex);
     fCond.Broadcast();
 }
@@ -479,6 +495,9 @@ bool PushInfo::parsePushInfo(const StrPtrLen& src) {
         if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
         startTime.Len = pos - startTime.Ptr;
         if (!NMSRTSPReqInfo::isDigital(startTime)) return false;
+
+        // filePath not include .sdp
+        fileName.Set(++pos, filePath.GetEnd() - pos + 1 - 4);
     }
 
     return true;
