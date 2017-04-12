@@ -17,9 +17,15 @@
  * req1:
  * 录像拖动：filePath 视频起始播放时间变化，其他不变。比如从0s快进到50s，app option需要等到上一个，即0s
  * 的视频线路结束后再继续发送下一个请求，即50s。
- * 等待条件：rtspReqInfoTable中存在除了起始播放时间不同的filePath
- * 唤醒条件：可以是这个车机ID teardown的时候
- * 条件变量：车机ID
+ * solution1: 条件变量
+ *  等待条件：rtspReqInfoTable中存在除了起始播放时间不同的filePath
+ *  唤醒条件：可以是这个车机ID teardown的时候
+ *  条件变量：车机ID
+ * solution2: 在拖动的app option中强制sleep
+ * 
+ * 以上方案不可行，因为即使能保证拖完后的播放请求在上一次完成后（solution2已实现），之后的流程，
+ * 车机option唤醒app option,但是motor setup 很大可能在app desc之后导致失败（不是同一个线程）
+ * 明天让app端试试拖动后强制sleep，暂时不作修改
  */
 
 
@@ -88,6 +94,24 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     bool AppOption = !rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
 
     if (MotorOption || AppOption) {
+
+#if Req1S2    
+        if (AppOption) {
+            PushInfo currPushInfo;
+            if (!currPushInfo.parsePushInfo(rtspReqInfo.fullUrl)) {
+                fprintf(stderr, "[ERROR] %.*s: parsePushInfo fail.\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
+                return;
+            }
+            if (currPushInfo.isRealtime || currPushInfo.startTime.Equal("0"))
+                ;
+            else {
+                fprintf(stderr, "[DEBUG] %.*s: Video drag, sleep 1s wait to last push finish. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                sleep(1);
+            }
+
+        }
+#endif
         //        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.filePath);
         pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
         DateTranslator::UpdateDateBuffer(&theDate, 0);
@@ -122,6 +146,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
             if (AppOption) { // may another app with same url is waiting, may push has arrived.
 
+#if Req1S1  //需要改为收到车机teardown后唤醒App，表示上次播放完成。
                 // req1: 已注册的pushInfo与当前请求，除播放时间不同外，其他都相同，则等待
                 PushInfo* currPushInfo = new PushInfo();
                 if (!currPushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
@@ -164,6 +189,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                     fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
 
                 } else
+#endif      
                     fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             }
@@ -245,11 +271,11 @@ void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
     rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
     pushInfo->sendBeginOrStopMq(false);
 
-    if (needNotify) {
-        pushInfo->notifyApp();
-        fprintf(stderr, "[DEBUG] %.*s: Push finished & notified. %s TID: %lu\n\n",
-                fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-    }
+    //    if (needNotify) {
+    //        pushInfo->notifyApp();
+    //        fprintf(stderr, "[DEBUG] %.*s: Push finished & notified. %s TID: %lu\n\n",
+    //                fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+    //    }
 
     delete pushInfo;
     DateTranslator::UpdateDateBuffer(&theDate, 0);
