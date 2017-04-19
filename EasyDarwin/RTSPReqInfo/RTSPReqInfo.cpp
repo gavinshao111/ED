@@ -119,7 +119,6 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             if (MotorOption) {
                 fprintf(stderr, "[WARN] %.*s: MotorOption arrived, but there's no app wait for push. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-                return;
             }
             pushInfo = new PushInfo();
             if (!pushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
