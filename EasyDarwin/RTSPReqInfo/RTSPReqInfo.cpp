@@ -53,8 +53,8 @@ const char *strMQServerAddress = "ssl://120.26.86.124:8883";
 
 const int CTimeToWaitForPushArvd = 8;
 const int timeOutForSendMQ = 4;
-const char *strCarUserAgent = "LeapMotor Push v1.0";
-char *strUserAgent = "User-Agent:";
+const char *strCarUserAgentValue = "LeapMotor Push";
+char *strUserAgentKeyWord = "User-Agent:";
 const int maxPayLoadLen = 2000;
 const int maxTopicLen = 500;
 
@@ -387,8 +387,8 @@ void RTSPReqInfo::parseReqAndPrint(void) {
 
         }
 
-        if ((pos = completeRequest.FindString(strUserAgent)) == NULL) break;
-        pos += strlen(strUserAgent);
+        if ((pos = completeRequest.FindString(strUserAgentKeyWord)) == NULL) break;
+        pos += strlen(strUserAgentKeyWord);
 
         // skip space between "User-Agent:" and "LeapMotor Push v1.0"
         bool fail = false;
@@ -399,7 +399,7 @@ void RTSPReqInfo::parseReqAndPrint(void) {
             }
         if (fail) break;
 
-        isFromLeapMotor = (0 == strncmp(pos, strCarUserAgent, strlen(strCarUserAgent)));
+        isFromLeapMotor = (0 == strncmp(pos, strCarUserAgentValue, strlen(strCarUserAgentValue)));
 
         DateBuffer theDate;
         DateTranslator::UpdateDateBuffer(&theDate, 0);
