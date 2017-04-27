@@ -371,7 +371,7 @@ void RTSPReqInfo::parseReqAndPrint(void) {
     char* posOfFilePathEnd;
 
     do {
-        if (RTSPType == option || RTSPType == announce) {
+        if (RTSPType == option || RTSPType == announce || RTSPType == teardown) {
             if ((pos = completeRequest.FindNextChar(' ')) == NULL) break;
 
             fullUrl.Ptr = ++pos;
