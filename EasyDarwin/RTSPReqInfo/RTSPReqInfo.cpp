@@ -92,8 +92,9 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     bool MotorOption = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
     bool MotorAnnounce = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == announce;
     bool AppOption = !rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
+    bool MotorTeardown = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == teardown;
 
-    if (MotorOption || AppOption) {
+    if (MotorOption || AppOption || MotorTeardown) {
 
 #if Req1S2    
         if (AppOption) {
@@ -191,6 +192,16 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 #endif      
                     fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            } else if (MotorTeardown) {
+                if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) {
+                    fprintf(stderr, "[INFO] %.*s: PushInfo already deleted, nothing to do. %s TID: %lu\n\n",
+                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    return;
+                }
+                delete pushInfo;
+                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             }
         }
 
@@ -235,7 +246,6 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                     rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         }
     }
-
 
 }
 
