@@ -57,6 +57,7 @@ const char *strCarUserAgentValue = "LeapMotor Push";
 char *strUserAgentKeyWord = "User-Agent:";
 const int maxPayLoadLen = 2000;
 const int maxTopicLen = 500;
+const time_t gmtOffset = 8 * 24 * 3600;
 
 OSMutex* PushInfo::fMutexForSendMQ = NULL;
 namespace NMSRTSPReqInfo {
@@ -115,8 +116,10 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 #endif
         //        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.filePath);
         pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
         if (NULL == pushInfoRef) { // 当前车机没有在推流，且在这之前没有其他app在等待当前车机播放
+            if (MotorTeardown)
+                return;
             if (MotorOption) {
                 fprintf(stderr, "[WARN] %.*s: MotorOption arrived, but there's no app wait for push. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
@@ -124,7 +127,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             pushInfo = new PushInfo();
             if (!pushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
                 fprintf(stderr, "[ERROR] pushInfo->parsePushInfo fail. filePath: %.*s\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
                 //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
                 //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
@@ -134,7 +137,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             pushInfo->readyToAddToTable();
             if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
                 fprintf(stderr, "[ERROR] Register fail, key: %.*s\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
-                //                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                //                DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
                 //                fprintf(stderr, "[DEBUG] %.*s: PushInfo will be deleted: %p %s TID: %lu\n\n", 
                 //                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, pushInfo, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
@@ -162,7 +165,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                             rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
                     bool r = pushInfo->waitForNotification(4);
-                    DateTranslator::UpdateDateBuffer(&theDate, 0);
+                    DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
                     if (!r) {
                         fprintf(stderr, "[WARN] %.*s: wait for Push finish timeout. %s TID: %lu\n\n",
                                 rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
@@ -199,13 +202,14 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                     return;
                 }
                 delete pushInfo;
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                return;
             }
         }
 
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
         if (MotorOption) {
             pushInfo->isPushArrived = true;
             fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n",
@@ -222,7 +226,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
             if (pushInfo->waitForNotification(CTimeToWaitForPushArvd)) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
 
                 /*
                  * for bug2, 因为如果app自带超时提前返回，不会进入desc404的流程，所以需要在这里就释放资源；
@@ -237,7 +241,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 }
                 pushInfo->sendBeginOrStopMq(false);
                 delete pushInfo;
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             }
@@ -270,10 +274,11 @@ void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
     }
 
     PushInfo* pushInfo = (PushInfo*) pushInfoRef->GetObject();
+    DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
     // for bug1
     if (!pushInfo->filePath.Equal(fullFileName)) {
-        fprintf(stderr, "[DEBUG] %.*s: This vehicle is pushing another url: %.*s. Nothing to do\n\n",
-                fullFileName.Len, fullFileName.Ptr, pushInfo->filePath.Len, pushInfo->filePath.Ptr);
+        fprintf(stderr, "[DEBUG] %.*s: This vehicle is pushing another url: %.*s. Nothing to do. %s TID: %lu\n\n",
+                fullFileName.Len, fullFileName.Ptr, pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         return;
     }
 
@@ -287,7 +292,7 @@ void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
     //    }
 
     delete pushInfo;
-    DateTranslator::UpdateDateBuffer(&theDate, 0);
+    DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
     fprintf(stderr, "[DEBUG] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
             fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
 
@@ -412,7 +417,7 @@ void RTSPReqInfo::parseReqAndPrint(void) {
         isFromLeapMotor = (0 == strncmp(pos, strCarUserAgentValue, strlen(strCarUserAgentValue)));
 
         DateBuffer theDate;
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        DateTranslator::UpdateDateBuffer(&theDate, gmtOffset);
         fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n",
                 completeRequest.Ptr, pos, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         return;
