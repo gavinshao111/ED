@@ -96,24 +96,6 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
 
     if (MotorOption || AppOption || MotorTeardown) {
 
-#if Req1S2    
-        if (AppOption) {
-            PushInfo currPushInfo;
-            if (!currPushInfo.parsePushInfo(rtspReqInfo.fullUrl)) {
-                fprintf(stderr, "[ERROR] %.*s: parsePushInfo fail.\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
-                return;
-            }
-            if (currPushInfo.isRealtime || currPushInfo.startTime.Equal("0"))
-                ;
-            else {
-                fprintf(stderr, "[DEBUG] %.*s: Video drag, sleep 1s wait to last push finish. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-                sleep(1);
-            }
-
-        }
-#endif
-        //        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.filePath);
         pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
         DateTranslator::UpdateDateBuffer(&theDate, 0);
         if (NULL == pushInfoRef) { // 当前车机没有在推流，且在这之前没有其他app在等待当前车机播放
@@ -147,51 +129,6 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         } else {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
             if (AppOption) { // may another app with same url is waiting, may push has arrived.
-
-#if Req1S1  //需要改为收到车机teardown后唤醒App，表示上次播放完成。
-                // req1: 已注册的pushInfo与当前请求，除播放时间不同外，其他都相同，则等待
-                PushInfo* currPushInfo = new PushInfo();
-                if (!currPushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
-                    fprintf(stderr, "[ERROR] %.*s: parsePushInfo fail.\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
-                    delete currPushInfo;
-                    return;
-                }
-                if (!pushInfo->isRealtime && !currPushInfo->isRealtime
-                        && pushInfo->isHD == currPushInfo->isHD
-                        && !pushInfo->startTime.Equal(currPushInfo->startTime)
-                        && pushInfo->fileName.Equal(currPushInfo->fileName)) {
-                    fprintf(stderr, "[DEBUG] %.*s: Video drag. %s TID: %lu\n\n",
-                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-
-                    bool r = pushInfo->waitForNotification(4);
-                    DateTranslator::UpdateDateBuffer(&theDate, 0);
-                    if (!r) {
-                        fprintf(stderr, "[WARN] %.*s: wait for Push finish timeout. %s TID: %lu\n\n",
-                                rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-                        delete currPushInfo;
-                        return;
-                    }
-                    fprintf(stderr, "[WARN] %.*s: Last push finished. %s TID: %lu\n\n",
-                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-
-                    // 此时pushInfo已在其他线程被删除UnRegister，需要重新生成并Register
-                    if (NULL != rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId)) {
-                        fprintf(stderr, "[ERROR] %.*s: Last PushInfo expected to be deleted in UnRegisterAndSendMQAndDelete() %s TID: %lu\n\n",
-                                rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-                        delete currPushInfo;
-                        return;
-                    }
-                    pushInfo = currPushInfo;
-                    pushInfo->readyToAddToTable();
-                    if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
-                        fprintf(stderr, "[ERROR] %.*s: Register fail\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
-                        delete pushInfo;
-                        return;
-                    }
-                    fprintf(stderr, "[DEBUG] %.*s: PushInfo allocated & registered\n\n", rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr);
-
-                } else
-#endif      
                     fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             } else if (MotorTeardown) {
@@ -283,12 +220,6 @@ void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
 
     rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
     pushInfo->sendBeginOrStopMq(false);
-
-    //    if (needNotify) {
-    //        pushInfo->notifyApp();
-    //        fprintf(stderr, "[DEBUG] %.*s: Push finished & notified. %s TID: %lu\n\n",
-    //                fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-    //    }
 
     delete pushInfo;
     DateTranslator::UpdateDateBuffer(&theDate, 0);
@@ -470,15 +401,6 @@ void PushInfo::notifyApp(void) {
     fCond.Broadcast();
 }
 
-//void RTSPReqInfo::Print(void){
-//    fprintf(stderr, "[RTSPReqInfo]\n");
-//    filePath.PrintToStderr();
-//    urlStart.PrintToStderr();
-//    clientId.PrintToStderr();
-//    userAgent.PrintToStderr();
-//    fprintf(stderr, "\n\n");
-//}
-
 PushInfo::PushInfo() {
     isPushArrived = false;
 }
@@ -599,66 +521,12 @@ void PushInfo::toMQPayLoad(const bool& isBegin) {
 bool PushInfo::PublishMq() const {
     char Topic[maxTopicLen] = {0};
     snprintf(Topic, maxTopicLen - 1, "/%.*s/videoinfoAsk", vehicleId.Len, vehicleId.Ptr);
-#if USEMQFORED    
     int rc = publishMq(strMQServerAddress, "EasyDarwin", Topic, MQPayLoad.Ptr, timeOutForSendMQ);
     if (0 != rc) {
         fprintf(stderr, "publishMq fail, return code: %d\n", rc);
         return false;
     }
-#else
-    MQTTClient client;
-    int rc = 0;
-    MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-    conn_opts.connectTimeout = timeOutForSendMQ;
-    MQTTClient_message pubmsg = MQTTClient_message_initializer;
-    MQTTClient_deliveryToken token;
-
-    if (rc = MQTTClient_create(&client, strMQServerAddress, "EasyDarwin",
-            MQTTCLIENT_PERSISTENCE_NONE, NULL) != MQTTCLIENT_SUCCESS) {
-        fprintf(stderr, "Failed to create MQTTClient, return code %d\n", rc);
-        return false;
-    }
-    conn_opts.keepAliveInterval = 20;
-    conn_opts.cleansession = 1;
-    conn_opts.username = "easydarwin";
-    conn_opts.password = "123456";
-
-#if 1
-    char pathOfServerPublicKey[MAXPATHLEN] = {0};
-    char pathOfPrivateKey[MAXPATHLEN] = {0};
-    snprintf(pathOfPrivateKey, MAXPATHLEN - 1, "%s/emqtt.key", getenv("ED"));
-    snprintf(pathOfServerPublicKey, MAXPATHLEN - 1, "%s/emqtt.pem", getenv("ED"));
-    MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;
-
-    ssl_opts.trustStore = pathOfServerPublicKey;
-    ssl_opts.keyStore = pathOfServerPublicKey;
-    ssl_opts.privateKey = pathOfPrivateKey;
-    ssl_opts.enableServerCertAuth = 0;
-    conn_opts.ssl = &ssl_opts;
-#endif
-
-
-    if (rc = MQTTClient_connect(client, &conn_opts) != MQTTCLIENT_SUCCESS) {
-        fprintf(stderr, "Failed to connect to MQ server, return code %d\n", rc);
-        return false;
-    }
-    pubmsg.payload = (void *) MQPayLoad.Ptr;
-    pubmsg.payloadlen = MQPayLoad.Len;
-    pubmsg.qos = 1;
-    pubmsg.retained = 0;
-
-    // fprintf(stderr, "[DEBUG] send MQ with topic: %s, PayLoad: ", Topic);
-    // MQPayLoad.PrintToStderr();
-    // fprintf(stderr, "\n\n");
-
-    if (rc = MQTTClient_publishMessage(client, Topic, &pubmsg, &token) != MQTTCLIENT_SUCCESS) {
-        fprintf(stderr, "Failed to publishMessage to MQ server, return code %d\n", rc);
-        return false;
-    }
-
-    MQTTClient_disconnect(client, 10000);
-    MQTTClient_destroy(&client);
-#endif    
+  
     return true;
 }
 
