@@ -9,7 +9,7 @@ extern "C"{
 
 #include "mainProcess.h"
 
-#define QOS         1
+#define QOS 2
 #define MQTTCLIENT_PERSISTENCE_NONE 1
 #define MAXPATHLEN 100
 
