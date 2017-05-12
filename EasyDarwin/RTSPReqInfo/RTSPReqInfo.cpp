@@ -126,6 +126,9 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                             rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                     return;
                 }
+                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                fprintf(stderr, "[INFO] %.*s: PushInfo unregistered. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted. %s TID: %lu\n\n",
@@ -164,6 +167,10 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                             rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                     return;
                 }
+                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                fprintf(stderr, "[INFO] %.*s: PushInfo unregistered. %s TID: %lu\n\n",
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                
                 pushInfo->sendBeginOrStopMq(false);
                 delete pushInfo;
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
@@ -208,6 +215,9 @@ void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
     }
 
     rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
+    DateTranslator::UpdateDateBuffer(&theDate, 0);
+    fprintf(stderr, "[DEBUG] %.*s: PushInfo unregistered. %s TID: %lu\n\n",
+            fullFileName.Len, fullFileName.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     pushInfo->sendBeginOrStopMq(false);
 
     delete pushInfo;
