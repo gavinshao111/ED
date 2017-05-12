@@ -121,14 +121,23 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             } else if (MotorTeardown) {
-                if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) {
-                    fprintf(stderr, "[INFO] %.*s: PushInfo already deleted, nothing to do. %s TID: %lu\n\n",
+
+                OSRef* pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
+                if (NULL == pushInfoRef) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.
+                    fprintf(stderr, "[INFO] %.*s: PushInfo already deleted, nothing to do. %s TID: %lu\n\n", 
                             rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
                     return;
                 }
+
+                PushInfo* pushInfo = (PushInfo*) pushInfoRef->GetObject();
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
-                fprintf(stderr, "[INFO] %.*s: PushInfo unregistered. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                if (!pushInfo->filePath.Equal(rtspReqInfo.filePath)) {
+                    fprintf(stderr, "[DEBUG] %.*s: App has request for another push, push info resvered when motor teardown. %s TID: %lu\n\n",
+                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    return;
+                }
+
+                rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
                 delete pushInfo;
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted. %s TID: %lu\n\n",
@@ -170,7 +179,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-                
+
                 pushInfo->sendBeginOrStopMq(false);
                 delete pushInfo;
                 DateTranslator::UpdateDateBuffer(&theDate, 0);
