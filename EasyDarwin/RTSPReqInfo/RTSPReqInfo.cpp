@@ -35,19 +35,8 @@
 #include "QTSServerInterface.h"
 #include <sys/time.h>
 
-#define USEMQFORED 1
-
-#if USEMQFORED
 #include "../../MqForEasyD/mainProcess.h"
-#else
-extern "C" {
-#include "MQTTAsync.h"
-#include "MQTTClient.h"
-}
 
-#define MQTTCLIENT_PERSISTENCE_NONE 1
-#define MAXPATHLEN 100
-#endif
 const char *strClientIdForMQ = "EasyDarwin";
 const char *strMQServerAddress = "ssl://120.26.86.124:8883";
 
@@ -129,7 +118,7 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
         } else {
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
             if (AppOption) { // may another app with same url is waiting, may push has arrived.
-                    fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
+                fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
                         rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
             } else if (MotorTeardown) {
                 if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) {
@@ -205,7 +194,7 @@ void UnRegisterAndSendMQAndDelete(char *key, bool needNotify/* = false*/) {
 
     OSRef* pushInfoRef = rtspReqInfoTable->Resolve(&vehicleId);
     if (NULL == pushInfoRef) { // in case that 2 apps wait for a same url push, but didn't receive, first call this func to UnRegister the url and another call again, Resolve will fail.
-        //        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", fullFileName.Len, fullFileName.Ptr);
+        fprintf(stderr, "[INFO] %.*s: UnRegisterAndSendMQAndDelete.Resolve fail, rtspReqInfoRef == NULL.\n\n", vehicleId.Len, vehicleId.Ptr);
         return;
     }
 
@@ -526,7 +515,7 @@ bool PushInfo::PublishMq() const {
         fprintf(stderr, "publishMq fail, return code: %d\n", rc);
         return false;
     }
-  
+
     return true;
 }
 
