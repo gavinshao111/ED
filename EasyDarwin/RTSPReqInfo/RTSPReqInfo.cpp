@@ -462,8 +462,8 @@ bool PushInfo::parsePushInfo(const StrPtrLen& src) {
     if (isRealtime) {
         cameraIndex.Ptr = ++pos;
         if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
-        startTime.Len = pos - startTime.Ptr;
-        if (!NMSRTSPReqInfo::isDigital(startTime)) return false;
+        cameraIndex.Len = pos - cameraIndex.Ptr;
+        if (!NMSRTSPReqInfo::isDigital(cameraIndex)) return false;
     } else {
         startTime.Ptr = ++pos;
         if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
