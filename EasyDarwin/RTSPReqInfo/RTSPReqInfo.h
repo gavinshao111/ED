@@ -36,7 +36,7 @@ public:
     StrPtrLen filePath;
     StrPtrLen fullUrl;
     StrPtrLen vehicleId;
-    
+
 
     /*
      * LeapMotor Push v1.0 -> true
@@ -59,9 +59,8 @@ private:
     PushInfo* pushInfo;
     StrPtrLen completeRequest;
     StrPtrLen userAgent;
-    
-};
 
+};
 
 /*
  * when app req arrived, registe into map and wait, then when another app with same url arrived,
@@ -74,7 +73,7 @@ private:
  *
  * when all apps leave, call UnRegister
  */
-class PushInfo{
+class PushInfo {
 public:
 
     /*
@@ -82,30 +81,32 @@ public:
      * expect like record/phoneapptest/1/123.sdp
      */
     StrPtrLen filePath;
-    
+
     /*
      * set true when wake up from wait.
      */
     bool isPushArrived;
 
     static OSMutex* fMutexForSendMQ;
-    
+
     PushInfo();
     virtual ~PushInfo();
-    
+
     /*
      * rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
      * rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
      */
     bool parsePushInfo(const StrPtrLen& src);
-    
-    OSRef* GetRef() { return &fRef; }
+
+    OSRef* GetRef() {
+        return &fRef;
+    }
     void readyToAddToTable(void);
     /*
      * send Mq if it is app's option or teardown
      */
     void sendBeginOrStopMq(bool isBegin);
-    
+
     /*
      * if the push is not established, sendMQ then call this function to block until push arrived or timeout(8s).
      * rc:
@@ -115,10 +116,10 @@ public:
     bool waitForNotification(const int& timeToWaitForPushArvd);
 
     void notifyApp(void);
-    
-    
+
+
 private:
-    
+
     // For storage in the session map
     OSRef fRef;
     /*
@@ -141,21 +142,22 @@ private:
      * 1 -> false -> SD
      */
     bool isHD;
-    
+
     StrPtrLen startTime;
+    StrPtrLen cameraIndex;
     StrPtrLen fileName;
     
+
     OSMutex fMutex;
-    OSCond  fCond;
-    
+    OSCond fCond;
+
     bool PublishMq(void) const;
     void toMQPayLoad(const bool& isBegin);
-    
-    
+
+
     friend class RTSPReqInfo;
     friend void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
-    };
+};
 
 
 #endif /* RTSPREQINFO_H */
-

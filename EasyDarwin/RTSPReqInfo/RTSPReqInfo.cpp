@@ -419,7 +419,7 @@ PushInfo::~PushInfo() {
 }
 
 /*
- * rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
+ * rtsp://120.27.188.84:8888/realtime/1234/1/2/realtime.sdp
  * rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
  */
 bool PushInfo::parsePushInfo(const StrPtrLen& src) {
@@ -459,7 +459,12 @@ bool PushInfo::parsePushInfo(const StrPtrLen& src) {
     else return false;
     if (*(++pos) != '/') return false;
 
-    if (!isRealtime) {
+    if (isRealtime) {
+        cameraIndex.Ptr = ++pos;
+        if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
+        startTime.Len = pos - startTime.Ptr;
+        if (!NMSRTSPReqInfo::isDigital(startTime)) return false;
+    } else {
         startTime.Ptr = ++pos;
         if ((pos = filePath.FindNextChar('/', pos)) == NULL) return false;
         startTime.Len = pos - startTime.Ptr;
@@ -494,7 +499,10 @@ void PushInfo::toMQPayLoad(const bool& isBegin) {
             NMSRTSPReqInfo::strlcat(strPayLoad, "SD", maxPayLoadLen);
         //}
 
-        if (!isRealtime) {
+        if (isRealtime) {
+            NMSRTSPReqInfo::strlcat(strPayLoad, "\",\"Index\":\"", maxPayLoadLen);
+            strncat(strPayLoad, cameraIndex.Ptr, cameraIndex.Len);
+        } else {
             NMSRTSPReqInfo::strlcat(strPayLoad, "\",\"CurrentTime\":\"", maxPayLoadLen);
             strncat(strPayLoad, startTime.Ptr, startTime.Len);
         }
