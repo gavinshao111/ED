@@ -73,6 +73,6 @@ status)
 esac
 
 #cp this file to /etc/init.d/easydarwin to register as service
-#and run "chkcnfig --add easydarwin" for PowerBoot
+#and run "chkconfig --add easydarwin" for PowerBoot
 #add task of restart service daily on 2:00 to crontab:
 #* 2 * * * service easydarwin restart
