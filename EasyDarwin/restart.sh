@@ -24,12 +24,12 @@ restart(){
 hoursTo2clcok=$[26 - $(date +%H)]
 #timeSleep=$[60 - $(date +%M)]
 
-#restart
+restart
 sleep ${hoursTo2clcok}h
 #sleep ${timeSleep}m
 
 while :
 do
     restart
-    sleep 24h
+    sleep 1m
 done
