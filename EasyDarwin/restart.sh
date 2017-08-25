@@ -24,6 +24,7 @@ restart(){
 hoursTo2clcok=$[26 - $(date +%H)]
 #timeSleep=$[60 - $(date +%M)]
 
+echo PID: $$
 restart
 sleep ${hoursTo2clcok}h
 #sleep ${timeSleep}m
@@ -31,5 +32,5 @@ sleep ${hoursTo2clcok}h
 while :
 do
     restart
-    sleep 1m
+    sleep 24h
 done
