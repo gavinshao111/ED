@@ -5,7 +5,9 @@ startup_script=startUpInDebug.sh
 
 restart(){
     if [ $(ps -ef | grep "$target" | grep -v "grep" | wc -l) -eq 1 ]; then
-        kill $(ps -ef | grep "$target" | grep -v "grep" | awk '{print $2}')
+
+        # if ed is in close_wait, only kill -9 will work
+        kill -9 $(ps -ef | grep "$target" | grep -v "grep" | awk '{print $2}')
         if [ $? -eq 0 ]; then
             echo killed
         else
