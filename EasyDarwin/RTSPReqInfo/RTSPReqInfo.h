@@ -14,14 +14,14 @@ enum enumRTSPType {
     option, describe, announce, setup, play, record, teardown, invaild
 };
 
-void UnRegisterAndSendMQAndDelete(char *key, bool needNotify = false);
+void UnRegisterAndSendMQAndDelete(char *key, bool call_from_describe = false);
 void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
 
 class PushInfo;
 
 class RTSPReqInfo {
     /*
-     * "rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp"
+     * "rtsp://....sdp"
      * to {"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp","VideoType":"SD","Operation":"Begin","Datetime":"1480735266671"}
      * or {"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp","VideoType":"","Operation":"Stop","Datetime":"1480735281212"} 
      *
@@ -48,9 +48,6 @@ public:
     RTSPReqInfo(const RTSPReqInfo& orig);
     virtual ~RTSPReqInfo();
 
-    /*
-     * fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n", fRequest.Ptr, fRequest.Ptr+videoReqInfo.userAgentOfst, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-     */
     void parseReqAndPrint(void);
     void Print(void);
 
@@ -92,10 +89,6 @@ public:
     PushInfo();
     virtual ~PushInfo();
 
-    /*
-     * rtsp://120.27.188.84:8888/realtime/1234/1/realtime.sdp
-     * rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
-     */
     bool parsePushInfo(const StrPtrLen& src);
 
     OSRef* GetRef() {

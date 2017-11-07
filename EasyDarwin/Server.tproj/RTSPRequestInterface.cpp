@@ -622,29 +622,10 @@ void RTSPRequestInterface::WriteStandardHeaders() {
 
         // if car has not push before APP request timeout, send a StopMQ to car anyway.
         if (fStatus == qtssClientNotFound) {
-#if 0
-            char *ip = GetSession()->GetSocket()->GetLocalAddrStr()->Ptr;
-            int port = (int) GetSession()->GetSocket()->GetLocalPort();
-
-            // fFilePath is like "/realtime/$1234/1/realtime.sdp"
-            char* urlWithoutRTSP = new char[strlen(ip) + 20 + strlen(fFilePath) + 1];
-            memset(urlWithoutRTSP, 0, strlen(ip) + 20 + strlen(fFilePath) + 1);
-            sprintf(urlWithoutRTSP, "%s:%d%s", ip, port, fFilePath);
-            fprintf(stderr, "[INFO] %s: Haven't receive Push, APP will disconnect.\n", fFilePath + 1);
-            int rc = sendStopPushMq(urlWithoutRTSP, timeOutForSendMQ);
-            DateBuffer theDate;
-            DateTranslator::UpdateDateBuffer(&theDate, 0);
-            if (0 == rc)
-                fprintf(stderr, "[INFO] %s: StopPush MQ sent. %s\n\n", fFilePath + 1, theDate.GetDateBuffer());
-            else
-                fprintf(stderr, "[WARN] %s: sendStopPushMq fail, return code: %d %s\n\n", fFilePath + 1, rc, theDate.GetDateBuffer());
-            if (0 != cleanCV(fFilePath + 1, 0))
-                fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", fFilePath + 1);
-#endif           
             DateBuffer theDate;
             DateTranslator::UpdateDateBuffer(&theDate, 0);
             fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. %s TID: %lu\n\n\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            UnRegisterAndSendMQAndDelete(fFilePath+1);
+            UnRegisterAndSendMQAndDelete(fFilePath+1, true);
             
         }
     }

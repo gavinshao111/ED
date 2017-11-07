@@ -382,30 +382,16 @@ void ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClient) 
 
 
         // fStreamName is like "realtime/$1234/1/realtime"
-        // we need splice tobe ip:port/realtime/$1234/1/realtim.sdp    
-#if 0                
-        char* urlWithoutRTSP = new char[strlen(ServerIP) + 20 + strlen(fStreamName) + 1];
-        memset(urlWithoutRTSP, 0, strlen(ServerIP) + 20 + strlen(fStreamName) + 1);
-        sprintf(urlWithoutRTSP, "%s:%d/%s.sdp", ServerIP, ServerPort, fStreamName);
-
-        int rc = sendStopPushMq(urlWithoutRTSP, timeOutForSendMQ);
-        delete[] urlWithoutRTSP;
-
-        DateBuffer theDate;
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
-        if (0 == rc)
-            fprintf(stderr, "[INFO] %s.sdp: No APP, StopPush MQ sent. %s\n\n", fStreamName, theDate.GetDateBuffer());
-        else
-            fprintf(stderr, "[WARN] %s.sdp: No APP, sendStopPushMq fail, return code: %d %s\n\n", fStreamName, rc, theDate.GetDateBuffer());
-#endif
+        // we need splice tobe realtime/$1234/1/realtim.sdp    
         DateBuffer theDate;
         int lenOffStreamName = strlen(fStreamName);
         char* cFullFileName = new char[5 + lenOffStreamName];
         sprintf(cFullFileName, "%s.sdp", fStreamName);
         *(cFullFileName + 5 + lenOffStreamName - 1) = 0;
         DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[INFO] %s: No app, app disconnect. %s TID: %lu\n\n\n\n", cFullFileName, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-        UnRegisterAndSendMQAndDelete(cFullFileName, true);
+        fprintf(stderr, "[INFO] %s: ReflectorSession::%s: fNumOutputs == 0. %s TID: %lu\n\n\n\n", cFullFileName, __func__, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+        UnRegisterAndSendMQAndDelete(cFullFileName);
+        delete cFullFileName;
     }
 }
 

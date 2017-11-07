@@ -2170,8 +2170,8 @@ void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16
 #endif
                                 // theSessionRef->GetString()->Ptr is like "./Movies/realtime/$1234/1/realtime.sdp"
                                 char* key = theSessionRef->GetString()->Ptr + strlen("./Movies/");
-				fprintf(stderr, "[INFO] %s: Push stopped.\n\n\n\n\n", key);
-                                UnRegisterAndSendMQAndDelete(key, true);
+				fprintf(stderr, "[INFO] %s: QTSSReflectorModule - %s: theSessionRef->GetRefCount() == 0.\n\n\n\n\n", key, __func__);
+                                UnRegisterAndSendMQAndDelete(key);
 #if 0
                                 if (0 != cleanCV(theSessionRef->GetString()->Ptr + strlen("./Movies/"), 0))
                                     fprintf(stderr, "[INFO] %s: path is not existing in condition variable map.\n\n", theSessionRef->GetString()->Ptr + strlen("./Movies/"));

@@ -1,18 +1,15 @@
 realtime:
-	rtsp://ip:port/realtime/$MotorId/$VideoType/realtime.sdp
-	like rtsp://120.26.86.124:8888/realtime/1234/1/realtime.sdp
+	rtsp://ip:port/realtime/$MotorId/$VideoType/$cameraIndex/realtime.sdp
+	like rtsp://120.26.86.124:8888/realtime/1234/1/2/realtime.sdp
 record:
-	rtsp://ip:Port/record/$MotorId/$VideoType/$StartTime/$FileName.sdp
+	rtsp://ip:port/record/$MotorId/$VideoType/$StartTime/$FileName.sdp
 	Unit of $StartTime is second.
 	
-	like record/FIRSTLPS0/1/0/2017-03-02_080956_0300.sdp
+	like rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp
 	
 	
 	$VideoType is '0' for HD or '1' for SD
 
-{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp","VideoType":"SD","Operation":"Begin","Datetime":"1480735266671"}
-
-{"ServiceType":"viedoPlayer","Data_Type":"Realtime","URL":"rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp","VideoType":"","Operation":"Stop","Datetime":"1480735281212"}
 
 EasyDarwin与车机MQTT的实时视频通讯JSON发送
 
@@ -22,9 +19,11 @@ EasyDarwin与车机MQTT的实时视频通讯JSON发送
 
 "Data_Type":" Realtime",		// need when stop
 
-"URL":"rtsp://ip:Port/realtime/$clientid/realtime.sdp",   // need when stop
+"URL":"rtsp://120.26.86.124:8888/realtime/1234/1/2/realtime.sdp",   // need when stop
 
 "VideoType":"SD",                              //HD高清  0      SD标清 1
+
+"Index":"1"
 
 "Operation":" Begin"  / "Stop",
 
@@ -40,7 +39,7 @@ EasyDarwin与车机MQTT的录像通讯JSON发送
 
 "Data_Type":" Recording",
 
-"URL":"rtsp://ip:Port/record/$clientid/20140820163420.sdp",
+"URL":"rtsp://120.27.188.84:8888/record/1234/1/12/20140820163420.sdp",
 
 "VideoType":"SD",                              //HD高清        SD标清
 
