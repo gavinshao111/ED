@@ -389,7 +389,7 @@ void ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClient) 
         sprintf(cFullFileName, "%s.sdp", fStreamName);
         *(cFullFileName + 5 + lenOffStreamName - 1) = 0;
         DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[INFO] %s: ReflectorSession::%s: fNumOutputs == 0. %s TID: %lu\n\n\n\n", cFullFileName, __func__, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+        fprintf(stderr, "[INFO] %s: ReflectorSession::%s: fNumOutputs == 0. %s TID: %lu\n\n", cFullFileName, __func__, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         UnRegisterAndSendMQAndDelete(cFullFileName);
         delete cFullFileName;
     }

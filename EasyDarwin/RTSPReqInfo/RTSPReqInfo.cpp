@@ -206,7 +206,7 @@ void UnRegisterAndSendMQAndDelete(char *key, bool call_from_describe/* = false*/
         
         pushInfo = new PushInfo();
         char* cPathWithPrefix = new char[30 + fullFileName.Len];
-        sprintf(cPathWithPrefix, "rtsp://ip:port/%s", key);
+        sprintf(cPathWithPrefix, "rtsp://120.26.86.124:8888/%s", key);
         StrPtrLen src(cPathWithPrefix);
         if (!pushInfo->parsePushInfo(src)) {
             DateTranslator::UpdateDateBuffer(&theDate, 0);
@@ -218,7 +218,7 @@ void UnRegisterAndSendMQAndDelete(char *key, bool call_from_describe/* = false*/
         }
         delete cPathWithPrefix;
         DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[WARN] %s: in some bug case, pushInfo not existed in rtspReqInfoTable but vehicle is pushing, forcibly new an instance to send stopMQ. %s TID: %lu\n\n", 
+        fprintf(stderr, "[WARN] %s: in some bug case, pushInfo not existed in rtspReqInfoTable but vehicle is staill pushing, forcibly new an instance to send stopMQ. %s TID: %lu\n\n", 
                 key, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
     } else
         pushInfo = (PushInfo*) pushInfoRef->GetObject();
@@ -230,8 +230,8 @@ void UnRegisterAndSendMQAndDelete(char *key, bool call_from_describe/* = false*/
                 key, pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
         return;
     }
-
-    rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
+    if (pushInfoRef != NULL)
+        rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
     pushInfo->sendBeginOrStopMq(false);
     delete pushInfo;
     DateTranslator::UpdateDateBuffer(&theDate, 0);
