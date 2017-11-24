@@ -1,0 +1,199 @@
+app1 播放 12345，APP2播放12344，APP3播放1234，只有1234是有效的，即会被MotorOption唤醒，
+但是处理1234的MotorOption的线程跟处理12345的AppOption是同一个，即在处理完12345的AppOption
+8s超时返回后才会处理1234的MotorOption，所以app3也会播放失败。
+
+************ OPTION Gavin RTS Tue, 11 Apr 2017 06:21:32 GMT TID: 139903615174400
+
+[DEBUG] realtime/12345/0/realtime.sdp: PushInfo allocated & registered
+
+[DEBUG] realtime/12345/0/realtime.sdp: AppOption & Push hasn't Arrived & hasn't registered. Tue, 11 Apr 2017 06:21:32 GMT TID: 139903615174400
+
+[DEBUG] MQ isBegin: 1 sent.
+
+************ OPTION LibVLC/2. Tue, 11 Apr 2017 06:21:33 GMT TID: 139903604684544
+
+[DEBUG] realtime/12344/1/realtime.sdp: PushInfo allocated & registered
+
+[DEBUG] realtime/12344/1/realtime.sdp: AppOption & Push hasn't Arrived & hasn't registered. Tue, 11 Apr 2017 06:21:33 GMT TID: 139903604684544
+
+[DEBUG] MQ isBegin: 1 sent.
+
+************ OPTION Gavin RTS Tue, 11 Apr 2017 06:21:34 GMT TID: 139903594194688
+
+[DEBUG] realtime/1234/1/realtime.sdp: PushInfo allocated & registered
+
+[DEBUG] realtime/1234/1/realtime.sdp: AppOption & Push hasn't Arrived & hasn't registered. Tue, 11 Apr 2017 06:21:34 GMT TID: 139903594194688
+
+[DEBUG] MQ isBegin: 1 sent.
+
+
+
+
+
+
+
+
+
+[INFO] realtime/12345/0/realtime.sdp: Wait for push timeout(8s). Tue, 11 Apr 2017 06:21:41 GMT TID: 139903615174400
+
+[DEBUG] MQ isBegin: 0 sent.
+
+[INFO] realtime/12345/0/realtime.sdp: PushInfo unregistered and deleted, stop MQ sent. Tue, 11 Apr 2017 06:21:41 GMT TID: 139903615174400
+
+************ OPTION LeapMotor Tue, 11 Apr 2017 06:21:41 GMT TID: 139903615174400
+
+[DEBUG] realtime/1234/1/realtime.sdp: pushInfo->isPushArrived set true, notifyAppThread wake up.  TID: 139903615174400
+
+************ DESCRI Gavin RTS Tue, 11 Apr 2017 06:21:41 GMT TID: 139903615174400
+
+[INFO] realtime/12345/0/realtime.sdp: DESC 404, app disconnect. Tue, 11 Apr 2017 06:21:41 GMT TID: 139903615174400
+
+
+
+************ ANNOUN LeapMotor Tue, 11 Apr 2017 06:21:41 GMT TID: 139903594194688
+
+************ DESCRI Gavin RTS Tue, 11 Apr 2017 06:21:41 GMT TID: 139903594194688
+
+[INFO] realtime/1234/1/realtime.sdp: DESC 404, app disconnect. Tue, 11 Apr 2017 06:21:41 GMT TID: 139903594194688
+
+
+
+[DEBUG] MQ isBegin: 0 sent.
+
+[DEBUG] realtime/1234/1/realtime.sdp: PushInfo unregistered and deleted, stop MQ sent. Tue, 11 Apr 2017 06:21:42 GMT TID: 139903594194688
+
+[INFO] realtime/12344/1/realtime.sdp: Wait for push timeout(8s). Tue, 11 Apr 2017 06:21:42 GMT TID: 139903604684544
+
+[DEBUG] MQ isBegin: 0 sent.
+
+[INFO] realtime/12344/1/realtime.sdp: PushInfo unregistered and deleted, stop MQ sent. Tue, 11 Apr 2017 06:21:42 GMT TID: 139903604684544
+
+************ SETUP  LeapMotor Tue, 11 Apr 2017 06:21:42 GMT TID: 139903604684544
+
+[INFO] realtime/1234/1/realtime.sdp: Push established. Tue, 11 Apr 2017 06:21:42 GMT
+
+************ RECORD LeapMotor Tue, 11 Apr 2017 06:21:42 GMT TID: 139903604684544
+
+************ TEARDO LeapMotor Tue, 11 Apr 2017 06:21:42 GMT TID: 139903594194688
+
+[INFO] realtime/1234/1/realtime.sdp: Push stopped.
+
+
+
+bug2: 如果阻塞App desc等待车机setup唤醒，那么这ED就用同一个线程处理这两种请求，导致失败
+
+************ OPTION Lavf57.41 Wed, 12 Apr 2017 02:25:02 GMT TID: 140203051583232
+
+************ DESCRI Lavf57.41 Wed, 12 Apr 2017 02:25:02 GMT TID: 140203041093376
+
+[DEBUG] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: PushInfo allocated & registered
+
+[DEBUG] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: AppDesc & Push hasn't Arrived & hasn't registered. Wed, 12 Apr 2017 02:25:02 GMT TID: 140203041093376
+
+[DEBUG] MQ isBegin: 1 sent.
+
+************ OPTION LeapMotor Wed, 12 Apr 2017 02:25:03 GMT TID: 140203062073088
+
+************ ANNOUN LeapMotor Wed, 12 Apr 2017 02:25:03 GMT TID: 140203051583232
+
+[INFO] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: Wait for push timeout(8s). Wed, 12 Apr 2017 02:25:10 GMT TID: 140203041093376
+
+[DEBUG] MQ isBegin: 0 sent.
+
+[INFO] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: PushInfo unregistered and deleted, stop MQ sent. Wed, 12 Apr 2017 02:25:10 GMT TID: 140203041093376
+
+[INFO] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: DESC 404, app disconnect. Wed, 12 Apr 2017 02:25:10 GMT TID: 140203041093376
+
+
+
+************ SETUP  LeapMotor Wed, 12 Apr 2017 02:25:10 GMT TID: 140203041093376
+
+[WARN] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: MotorSetup arrived, but there's no app wait for push. Wed, 12 Apr 2017 02:25:10 GMT TID: 140203041093376
+
+[INFO] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: Push established. Wed, 12 Apr 2017 02:25:10 GMT
+
+************ RECORD LeapMotor Wed, 12 Apr 2017 02:25:11 GMT TID: 140203062073088
+
+************ TEARDO LeapMotor Wed, 12 Apr 2017 02:25:11 GMT TID: 140203051583232
+
+[INFO] record/86687302051740/1/0/2017-04-12_081058_0300.sdp: Push stopped.
+
+
+bug3: 如果阻塞App option等待车机setup唤醒，那么这ED就用同一个线程处理这两种请求，导致失败
+motor setup总是在app option、desc之后，即若app option 一直被阻塞，motor setup也永远无法完成
+
+bug4: 阻塞app option 等车机option唤醒，然后app option再sleep，车机setup也会被阻塞，比如app option
+被唤醒后再sleep 4s，车机announce之后4s才会setup。但是不是同一个线程。
+
+************ OPTION Lavf57.41 Wed, 12 Apr 2017 03:24:26 GMT TID: 140712901924608
+
+[DEBUG] record/86687302051740/1/0/2017-04-12_083558_0300.sdp: PushInfo allocated & registered
+
+[DEBUG] record/86687302051740/1/0/2017-04-12_083558_0300.sdp: AppOption & Push hasn't Arrived & hasn't registered. Wed, 12 Apr 2017 03:24:26 GMT TID: 140712901924608
+
+[DEBUG] MQ isBegin: 1 sent.
+
+************ OPTION LeapMotor Wed, 12 Apr 2017 03:24:27 GMT TID: 140712891434752
+
+[DEBUG] record/86687302051740/1/0/2017-04-12_083558_0300.sdp: pushInfo->isPushArrived set true, notifyAppThread wake up. Wed, 12 Apr 2017 03:24:27 GMT TID: 140712891434752
+
+************ ANNOUN LeapMotor Wed, 12 Apr 2017 03:24:27 GMT TID: 140712880944896
+
+************ SETUP  LeapMotor Wed, 12 Apr 2017 03:24:31 GMT TID: 140712901924608
+
+[INFO] record/86687302051740/1/0/2017-04-12_083558_0300.sdp: Push established. Wed, 12 Apr 2017 03:24:31 GMT
+
+************ DESCRI Lavf57.41 Wed, 12 Apr 2017 03:24:31 GMT TID: 140712891434752
+
+************ SETUP  Lavf57.41 Wed, 12 Apr 2017 03:24:31 GMT TID: 140712880944896
+
+************ PLAY r Lavf57.41 Wed, 12 Apr 2017 03:24:31 GMT TID: 140712901924608
+
+************ RECORD LeapMotor Wed, 12 Apr 2017 03:24:31 GMT TID: 140712891434752
+
+
+bug5: 如果阻塞App option等待车机announce唤醒，那么这ED就用同一个线程处理这两种请求
+************ RECORD LeapMotor Wed, 12 Apr 2017 05:48:30 GMT TID: 139631336085248
+
+************ SETUP  Lavf57.41 Wed, 12 Apr 2017 05:48:30 GMT TID: 139631325595392
+
+************ PLAY r Lavf57.41 Wed, 12 Apr 2017 05:48:30 GMT TID: 139631346575104
+
+************ TEARDO Lavf57.41 Wed, 12 Apr 2017 05:48:36 GMT TID: 139631336085248
+
+[INFO] record/86687302051740/1/0/2015-01-01_080030_0047.sdp: No app, app disconnect. Send Stop MQ. Wed, 12 Apr 2017 05:48:36 GMT TID: 139631430493952
+
+
+
+************ OPTION Lavf57.41 Wed, 12 Apr 2017 05:48:37 GMT TID: 139631325595392
+
+[DEBUG] record/86687302051740/1/24/2015-01-01_080030_0047.sdp: Video drag, sleep 1s wait to last push finish.  TID: 139631325595392
+
+[DEBUG] MQ isBegin: 0 sent.
+
+[DEBUG] record/86687302051740/1/0/2015-01-01_080030_0047.sdp: PushInfo unregistered and deleted, stop MQ sent. Wed, 12 Apr 2017 05:48:37 GMT TID: 139631430493952
+
+************ TEARDO LeapMotor Wed, 12 Apr 2017 05:48:37 GMT TID: 139631346575104
+
+[INFO] record/86687302051740/1/0/2015-01-01_080030_0047.sdp: Push stopped.
+
+
+
+
+[DEBUG] record/86687302051740/1/24/2015-01-01_080030_0047.sdp: PushInfo allocated & registered
+
+[DEBUG] record/86687302051740/1/24/2015-01-01_080030_0047.sdp: AppOption & Push hasn't Arrived & hasn't registered. Wed, 12 Apr 2017 05:48:38 GMT TID: 139631325595392
+
+[DEBUG] MQ isBegin: 1 sent.
+
+************ OPTION LeapMotor Wed, 12 Apr 2017 05:48:38 GMT TID: 139631336085248
+
+[INFO] record/86687302051740/1/24/2015-01-01_080030_0047.sdp: Wait for push timeout(8s). Wed, 12 Apr 2017 05:48:46 GMT TID: 139631325595392
+
+[DEBUG] MQ isBegin: 0 sent.
+
+[INFO] record/86687302051740/1/24/2015-01-01_080030_0047.sdp: PushInfo unregistered and deleted, stop MQ sent. Wed, 12 Apr 2017 05:48:46 GMT TID: 139631325595392
+
+
+bug6: 为了实现录像拖动，在处理第二次app option时sleep 4s，上次push完成，
+然后下次车机option唤醒app option,但是motor setup 很大可能在app desc之后导致失败。不是同一个线程。

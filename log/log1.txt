@@ -1,0 +1,690 @@
+在播放实时推送的视频时，App按下暂停键，EasyDarwin未收到任何RTSP数据。
+在播放EasyDarwin本地视频时，App按下暂停键，EasyDarwin收到PAUSE req。
+使用ware hourse 进行抓包测试
+
+
+
+
+play ok but client close automatically unexpected.
+为播放过程中，车机连接先断了，app就断了
+
+
+
+WARNING: No module folder exists.
+INFO: Loading Module...QTSSFileModule [static]
+INFO: Loading Module...QTSSReflectorModule [static]
+INFO: Loading Module...QTSSAccessLogModule [static]
+INFO: Loading Module...QTSSFlowControlModule [static]
+INFO: Loading Module...QTSSPosixFileSysModule [static]
+INFO: Loading Module...QTSSAdminModule [static]
+INFO: Loading Module...QTSSAccessModule [static]
+Streaming Server done starting up
+
+
+
+
+**************************************************************Start push MQ sent.
+
+
+
+
+#C->S:
+#time: ms=19496 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=192.168.43.201 port=8888
+#client: ip=192.168.43.1 port=49361
+OPTIONS rtsp://192.168.43.201:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 1\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+\r\n
+
+
+#S->C:
+#time: ms=19496 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 1\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+#C->S:
+#time: ms=19504 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=192.168.43.201 port=8888
+#client: ip=192.168.43.1 port=49361
+ANNOUNCE rtsp://192.168.43.201:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+Content-Type: application/sdp\r\n
+CSeq: 2\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+Content-Length: 297\r\n
+\r\n
+
+
+#S->C:
+#time: ms=19545 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 2\r\n
+\r\n
+
+
+#C->S:
+#time: ms=19947 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=61678
+OPTIONS rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 2\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+\r\n
+
+
+#S->C:
+#time: ms=19947 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 2\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+#C->S:
+#time: ms=19947 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=192.168.43.201 port=8888
+#client: ip=192.168.43.1 port=49361
+SETUP rtsp://192.168.43.201:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/streamid=0 RTSP/1.0\r\n
+Transport: RTP/AVP/UDP;unicast;client_port=26544-26545;mode=record\r\n
+CSeq: 3\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+\r\n
+
+
+
+#C->S:
+#time: ms=19947 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=61678
+DESCRIBE rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 3\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Accept: application/sdp\r\n
+\r\n
+QTSSReflectorModule.cpp:DoSetup Session =0x7f6870021130 refcount=1
+
+#S->C:
+#time: ms=19948 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 3\r\n
+Cache-Control: no-cache\r\n
+Session: 7720061178397311161\r\n
+Date: Fri, 09 Sep 2016 08:05:51 GMT\r\n
+Expires: Fri, 09 Sep 2016 08:05:51 GMT\r\n
+Transport: RTP/AVP/UDP;unicast;mode=record;source=192.168.43.201;client_port=26544-26545;server_port=6974-6975\r\n
+\r\n
+
+
+#S->C:
+#time: ms=19948 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 3\r\n
+Cache-Control: no-cache\r\n
+Content-length: 331\r\n
+Date: Fri, 09 Sep 2016 08:05:51 GMT\r\n
+Expires: Fri, 09 Sep 2016 08:05:51 GMT\r\n
+Content-Type: application/sdp\r\n
+x-Accept-Retransmit: our-retransmit\r\n
+x-Accept-Dynamic-Rate: 1\r\n
+Content-Base: rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/\r\n
+\r\n
+v=0\r\n
+o=- 0 0 IN IP4 127.0.0.1\r\n
+s=No Name\r\n
+c=IN IP4 0.0.0.0\r\n
+t=0 0\r\n
+a=tool:libavformat 57.25.100\r\n
+a=control:*\r\n
+m=video 0 RTP/AVP 96\r\n
+a=3GPP-Adaptation-Support:1\r\n
+a=rtpmap:96 H264/90000\r\n
+a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z2QAH62EAQwgCGEAQwgCGEAQwgCEK1AoAtyA,aO48sA==; profile-level-id=64001F\r\n
+a=control:trackID=0\r\n
+QTSSReflectorModule.cpp:DoDescribe Session =0x7f6870021130 refcount=1
+
+
+#C->S:
+#time: ms=19949 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=61678
+SETUP rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/trackID=0 RTSP/1.0\r\n
+CSeq: 4\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Transport: RTP/AVP;unicast;client_port=64350-64351\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoSetup Session =0x7f6870021130 refcount=2
+
+#S->C:
+#time: ms=19949 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 4\r\n
+Cache-Control: no-cache\r\n
+Session: 660956194275392620\r\n
+Date: Fri, 09 Sep 2016 08:05:51 GMT\r\n
+Expires: Fri, 09 Sep 2016 08:05:51 GMT\r\n
+Transport: RTP/AVP;unicast;source=172.17.4.9;client_port=64350-64351;server_port=6972-6973\r\n
+\r\n
+
+
+#C->S:
+#time: ms=19950 date=Fri, 09 Sep 2016 08:05:51 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=61678
+PLAY rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/ RTSP/1.0\r\n
+CSeq: 5\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Session: 660956194275392620\r\n
+Range: npt=0.000-\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoPlay Session =0x7f6870021130 refcount=2
+
+#S->C:
+#time: ms=19950 date=Fri, 09 Sep 2016 08:05:51 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 5\r\n
+Session: 660956194275392620\r\n
+Range: npt=now-\r\n
+RTP-Info: url=rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/trackID=0\r\n
+\r\n
+
+
+#C->S:
+#time: ms=20611 date=Fri, 09 Sep 2016 08:05:52 GMT
+#server: ip=192.168.43.201 port=8888
+#client: ip=192.168.43.1 port=49361
+RECORD rtsp://192.168.43.201:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+Range: npt=0.000-\r\n
+CSeq: 4\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+Session: 7720061178397311161\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoPlay Session =0x7f6870021130 refcount=2
+
+#S->C:
+#time: ms=20611 date=Fri, 09 Sep 2016 08:05:52 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 4\r\n
+Session: 7720061178397311161\r\n
+RTP-Info: url=rtsp://192.168.43.201:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/streamid=0\r\n
+\r\n
+
+
+#C->S:
+#time: ms=41022 date=Fri, 09 Sep 2016 08:06:12 GMT
+#server: ip=192.168.43.201 port=8888
+#client: ip=192.168.43.1 port=49361
+TEARDOWN rtsp://192.168.43.201:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 5\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+Session: 7720061178397311161\r\n
+\r\n
+
+
+#S->C:
+#time: ms=41022 date=Fri, 09 Sep 2016 08:06:12 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 5\r\n
+Session: 7720061178397311161\r\n
+Connection: Close\r\n
+\r\n
+QTSSReflectorModule.cpp:RemoveOutput Session =0x7f6870021130 refcount=1
+
+
+#C->S:
+#time: ms=51566 date=Fri, 09 Sep 2016 08:06:23 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=61678
+TEARDOWN rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp/ RTSP/1.0\r\n
+CSeq: 6\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Session: 660956194275392620\r\n
+\r\n
+
+
+#S->C:
+#time: ms=51566 date=Fri, 09 Sep 2016 08:06:23 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 6\r\n
+Session: 660956194275392620\r\n
+Connection: Close\r\n
+\r\n
+
+
+**************************************************************StopPush MQ sent.
+
+
+QTSSReflectorModule.cpp:RemoveOutput Session =0x7f6870021130 refcount=0
+QTSSReflectorModule.cpp:RemoveOutput UnRegister and delete session =0x7f6870021130 refcount=0
+
+
+
+client close automatically
+
+
+
+
+
+
+
+test6
+第一次打开挂了，自动发两次
+**************************************************************Start push MQ sent.
+
+
+
+
+#C->S:
+#time: ms=1647978 date=Fri, 09 Sep 2016 08:32:59 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62165
+OPTIONS rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 2\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+\r\n
+
+
+#S->C:
+#time: ms=1647978 date=Fri, 09 Sep 2016 08:32:59 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 2\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+#C->S:
+#time: ms=1647979 date=Fri, 09 Sep 2016 08:32:59 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62165
+DESCRIBE rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 3\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Accept: application/sdp\r\n
+\r\n
+
+
+#S->C:
+#time: ms=1647986 date=Fri, 09 Sep 2016 08:32:59 GMT
+RTSP/1.0 404 Not Found\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 3\r\n
+Connection: Close\r\n
+\r\n
+
+
+#C->S:
+#time: ms=1647990 date=Fri, 09 Sep 2016 08:32:59 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62168
+OPTIONS rtsp://172.17.4.9:8888 RTSP/1.0\r\n
+
+
+
+#C->S:
+#time: ms=1647990 date=Fri, 09 Sep 2016 08:32:59 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62168
+OPTIONS rtsp://172.17.4.9:8888 RTSP/1.0\r\n
+CSeq: 1\r\n
+User-Agent: RealMedia Player Version 6.0.9.1235 (linux-2.0-libc6-i386-gcc2.95)\r\n
+ClientChallenge: 9e26d33f2984236010ef6253fb1887f7\r\n
+PlayerStarttime: [28/03/2003:22:50:23 00:00]\r\n
+CompanyID: KnKV4M4I/B2FjJ1TToLycw==\r\n
+GUID: 00000000-0000-0000-0000-000000000000\r\n
+RegionData: 0\r\n
+ClientID: Linux_2.4_6.0.9.1235_play32_RN01_EN_586\r\n
+\r\n
+
+
+#S->C:
+#time: ms=1647991 date=Fri, 09 Sep 2016 08:32:59 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 1\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+**************************************************************Start push MQ sent.
+
+
+
+
+#C->S:
+#time: ms=1656873 date=Fri, 09 Sep 2016 08:33:08 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.128 port=8789
+OPTIONS rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 2\r\n
+User-Agent: LibVLC/2.0.1 (LIVE555 Streaming Media v2011.12.23)\r\n
+\r\n
+
+
+#S->C:
+#time: ms=1656873 date=Fri, 09 Sep 2016 08:33:08 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 2\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+#C->S:
+#time: ms=1656874 date=Fri, 09 Sep 2016 08:33:08 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.128 port=8789
+DESCRIBE rtsp://172.17.4.9:8888/record/$carleapmotorCLOUDE20160727inform/1/2016-08-30_113613.sdp RTSP/1.0\r\n
+CSeq: 3\r\n
+User-Agent: LibVLC/2.0.1 (LIVE555 Streaming Media v2011.12.23)\r\n
+Accept: application/sdp\r\n
+\r\n
+
+
+#S->C:
+#time: ms=1656874 date=Fri, 09 Sep 2016 08:33:08 GMT
+RTSP/1.0 404 Not Found\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 3\r\n
+Connection: Close\r\n
+\r\n
+
+
+#C->S:
+#time: ms=1656879 date=Fri, 09 Sep 2016 08:33:08 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.128 port=8794
+OPTIONS rtsp://172.17.4.9:8888 RTSP/1.0\r\n
+
+
+
+#C->S:
+#time: ms=1656879 date=Fri, 09 Sep 2016 08:33:08 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.128 port=8794
+OPTIONS rtsp://172.17.4.9:8888 RTSP/1.0\r\n
+CSeq: 1\r\n
+User-Agent: RealMedia Player Version 6.0.9.1235 (linux-2.0-libc6-i386-gcc2.95)\r\n
+ClientChallenge: 9e26d33f2984236010ef6253fb1887f7\r\n
+PlayerStarttime: [28/03/2003:22:50:23 00:00]\r\n
+CompanyID: KnKV4M4I/B2FjJ1TToLycw==\r\n
+
+
+
+#C->S:
+#time: ms=1656880 date=Fri, 09 Sep 2016 08:33:08 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.128 port=8794
+OPTIONS rtsp://172.17.4.9:8888 RTSP/1.0\r\n
+CSeq: 1\r\n
+User-Agent: RealMedia Player Version 6.0.9.1235 (linux-2.0-libc6-i386-gcc2.95)\r\n
+ClientChallenge: 9e26d33f2984236010ef6253fb1887f7\r\n
+PlayerStarttime: [28/03/2003:22:50:23 00:00]\r\n
+CompanyID: KnKV4M4I/B2FjJ1TToLycw==\r\n
+GUID: 00000000-0000-0000-0000-000000000000\r\n
+RegionData: 0\r\n
+ClientID: Linux_2.4_6.0.9.1235_play32_RN01_EN_586\r\n
+\r\n
+
+
+#S->C:
+#time: ms=1656880 date=Fri, 09 Sep 2016 08:33:08 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 1\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+
+自己模拟车机测试：打开然后关闭
+
+test9
+
+
+
+
+**************************************************************Start push MQ sent.
+
+
+
+
+#C->S:
+#time: ms=2655185 date=Fri, 09 Sep 2016 08:49:46 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=172.17.4.9 port=45666
+OPTIONS rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp RTSP/1.0\r\n
+CSeq: 1\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+\r\n
+
+
+#S->C:
+#time: ms=2655185 date=Fri, 09 Sep 2016 08:49:46 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 1\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+#C->S:
+#time: ms=2655186 date=Fri, 09 Sep 2016 08:49:46 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=172.17.4.9 port=45666
+ANNOUNCE rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp RTSP/1.0\r\n
+Content-Type: application/sdp\r\n
+CSeq: 2\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+Content-Length: 301\r\n
+\r\n
+
+
+#S->C:
+#time: ms=2655224 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 2\r\n
+\r\n
+
+
+#C->S:
+#time: ms=2655703 date=Fri, 09 Sep 2016 08:49:47 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62405
+OPTIONS rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp RTSP/1.0\r\n
+CSeq: 2\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+\r\n
+
+
+#S->C:
+#time: ms=2655704 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 2\r\n
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD\r\n
+\r\n
+
+
+#C->S:
+#time: ms=2655704 date=Fri, 09 Sep 2016 08:49:47 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=172.17.4.9 port=45666
+SETUP rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/streamid=0 RTSP/1.0\r\n
+Transport: RTP/AVP/UDP;unicast;client_port=14430-14431;mode=record\r\n
+CSeq: 3\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoSetup Session =0x7f6868006480 refcount=1
+
+#S->C:
+#time: ms=2655704 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 3\r\n
+Cache-Control: no-cache
+
+#C->S:
+#time: ms=2655704 date=Fri, 09 Sep 2016 08:49:47 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62405
+\r\n
+Session: 7943716941127992789\r\n
+Date: Fri, 09 Sep 2016 08:49:47 GMT\r\n
+Expires: Fri, 09 Sep 2016 08:49:47 GMT\r\n
+Transport: RTP/AVP/UDP;unicast;mode=record;source=172.17.4.9;client_port=14430-14431;server_port=6974-6975\r\n
+\r\n
+DESCRIBE rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp RTSP/1.0\r\n
+CSeq: 3\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Accept: application/sdp\r\n
+\r\n
+
+
+#S->C:
+#time: ms=2655705 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 3\r\n
+Cache-Control: no-cache\r\n
+Content-length: 339\r\n
+Date: Fri, 09 Sep 2016 08:49:47 GMT\r\n
+Expires: Fri, 09 Sep 2016 08:49:47 GMT\r\n
+Content-Type: application/sdp\r\n
+x-Accept-Retransmit: our-retransmit\r\n
+x-Accept-Dynamic-Rate: 1\r\n
+Content-Base: rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/\r\n
+\r\n
+v=0\r\n
+o=- 0 0 IN IP4 127.0.0.1\r\n
+s=No Name\r\n
+c=IN IP4 0.0.0.0\r\n
+t=0 0\r\n
+a=tool:libavformat 57.40.101\r\n
+a=control:*\r\n
+m=video 0 RTP/AVP 96\r\n
+a=3GPP-Adaptation-Support:1\r\n
+a=rtpmap:96 H264/90000\r\n
+a=fmtp:96 packetization-mode=1; sprop-parameter-sets=J2QAKKwXKgFAFuhAAAD6AAA6mDgAAA9CQAAExLS97rKA,KP4Briw=; profile-level-id=640028\r\n
+a=control:trackID=0\r\n
+QTSSReflectorModule.cpp:DoDescribe Session =0x7f6868006480 refcount=1
+
+
+#C->S:
+#time: ms=2655705 date=Fri, 09 Sep 2016 08:49:47 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=172.17.4.9 port=45666
+RECORD rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp RTSP/1.0\r\n
+Range: npt=0.000-\r\n
+CSeq: 4\r\n
+User-Agent: LeapMotor Push v1.0\r\n
+Session: 7943716941127992789\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoPlay Session =0x7f6868006480 refcount=1
+
+#S->C:
+#time: ms=2655705 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 4\r\n
+Session: 7943716941127992789\r\n
+RTP-Info: url=rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/streamid=0\r\n
+\r\n
+
+
+#C->S:
+#time: ms=2655705 date=Fri, 09 Sep 2016 08:49:47 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62405
+SETUP rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/trackID=0 RTSP/1.0\r\n
+CSeq: 4\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Transport: RTP/AVP;unicast;client_port=52042-52043\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoSetup Session =0x7f6868006480 refcount=2
+
+#S->C:
+#time: ms=2655706 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 4\r\n
+Cache-Control: no-cache\r\n
+Session: 264111159834457470\r\n
+Date: Fri, 09 Sep 2016 08:49:47 GMT\r\n
+Expires: Fri, 09 Sep 2016 08:49:47 GMT\r\n
+Transport: RTP/AVP;unicast;source=172.17.4.9;client_port=52042-52043;server_port=6972-6973\r\n
+\r\n
+
+
+#C->S:
+#time: ms=2655707 date=Fri, 09 Sep 2016 08:49:47 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62405
+PLAY rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/ RTSP/1.0\r\n
+CSeq: 5\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Session: 264111159834457470\r\n
+Range: npt=0.000-\r\n
+\r\n
+
+QTSSReflectorModule.cpp:DoPlay Session =0x7f6868006480 refcount=2
+
+#S->C:
+#time: ms=2655707 date=Fri, 09 Sep 2016 08:49:47 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 5\r\n
+Session: 264111159834457470\r\n
+Range: npt=now-\r\n
+RTP-Info: url=rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/trackID=0\r\n
+\r\n
+
+
+#C->S:
+#time: ms=2660392 date=Fri, 09 Sep 2016 08:49:52 GMT
+#server: ip=172.17.4.9 port=8888
+#client: ip=10.34.16.76 port=62405
+TEARDOWN rtsp://172.17.4.9:8888/realtime/$1234/1/realtime.sdp/ RTSP/1.0\r\n
+CSeq: 6\r\n
+User-Agent: LibVLC/2.2.4 (LIVE555 Streaming Media v2016.02.22)\r\n
+Session: 264111159834457470\r\n
+\r\n
+
+
+#S->C:
+#time: ms=2660392 date=Fri, 09 Sep 2016 08:49:52 GMT
+RTSP/1.0 200 OK\r\n
+Server: EasyDarwin/7.0.5 (Build/16.0518; Platform/Linux; Release/EasyDarwin; State/Development; )\r\n
+Cseq: 6\r\n
+Session: 264111159834457470\r\n
+Connection: Close\r\n
+\r\n
+
+
+**************************************************************StopPush MQ sent.
+
+
+QTSSReflectorModule.cpp:RemoveOutput Session =0x7f6868006480 refcount=1
+QTSSReflectorModule.cpp:RemoveOutput Session =0x7f6868006480 refcount=0
+QTSSReflectorModule.cpp:RemoveOutput UnRegister and delete session =0x7f6868006480 refcount=0
+
+

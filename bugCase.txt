@@ -1,0 +1,81 @@
+1.
+
+************ OPTION LibVLC/2. Mon, 17 Oct 2016 06:48:57 GMT TID: 140142358300416
+
+[INFO] record/$carleapmotorCLOUDE20160727inform/1/123.sdp: Start push MQ sent. Mon, 17 Oct 2016 06:48:57 GMT TID: 140142358300416
+
+[DEBUG] record/$carleapmotorCLOUDE20160727inform/1/123.sdp: path is not ExistingInSessionMap. Waiting for car to push. TID: 140142358300416
+
+************ OPTION LeapMotor Mon, 17 Oct 2016 06:49:02 GMT TID: 140142347810560
+
+getVBMType error for OPTIONS rtsp://120.27.188.84:8888 RTSP/1.0
+arleapmotorCLOUDE20160727inform/1/123.sdp RTSP/1.0
+CSeq: 5
+User-Agent: LeapMotor Push v1.0
+Session: 4621925904785229338
+
+5904785229338
+
+gent: LeapMotor Push v1.0
+
+. rc = -1
+there is no app waiting for OPTIONS rtsp://120.27.188.84:8888 RTSP/1.0
+arleapmotorCLOUDE20160727inform/1/123.sdp RTSP/1.0
+CSeq: 5
+User-Agent: LeapMotor Push v1.0
+Session: 4621925904785229338
+
+5904785229338
+
+gent: LeapMotor Push v1.0
+
+
+[WARN] notifyAppThePsuhIsArrived for  error.
+
+************ OPTION RealMedia Mon, 17 Oct 2016 06:49:02 GMT TID: 140142368790272
+
+[INFO] record/$carleapmotorCLOUDE20160727inform/1/123.sdp: waitForPush time out (8s).
+
+
+
+2. app option arrived, then thread#792 send MQ and block, then motor option arrived, then thread#504 notify thread#792, then thread#792 woke up and sleep(0.1). Then expect ED process motor's setup first then process app's describe, but ED process app's describe first, which result in play fail.
+app option 792 							-> app describe 792
+		motor option 504 -> motor announce 648 -> motor setup 504
+
+************ OPTION LibVLC/2. Tue, 06 Dec 2016 07:29:39 GMT TID: 140671896577792
+
+[INFO] realtime/$1234/1/realtime.sdp: Start push MQ sent. Tue, 06 Dec 2016 07:29:39 GMT TID: 140671896577792
+
+[DEBUG] realtime/$1234/1/realtime.sdp: path is not ExistingInSessionMap. Waiting for car to push. TID: 140671896577792
+
+************ OPTION LeapMotor Tue, 06 Dec 2016 07:29:40 GMT TID: 140671917557504
+
+[debug] before notifyAppThatPushIsArrived:
+OPTIONS rtsp://120.26.86.124:8888/realtime/$1234/1/realtime.sdp RTSP/1.0
+CSeq: 1
+User-Agent: LeapMotor Push v1.0
+
+ession: 3368543496092979316
+
+3496092979316
+
+gent: LeapMotor Push v1.0
+
+
+
+************ ANNOUN LeapMotor Tue, 06 Dec 2016 07:29:40 GMT TID: 140671907067648
+
+************ DESCRI LibVLC/2. Tue, 06 Dec 2016 07:29:40 GMT TID: 140671896577792
+
+[INFO] realtime/$1234/1/realtime.sdp: Haven't receive Push, APP will disconnect.
+************ SETUP  LeapMotor Tue, 06 Dec 2016 07:29:40 GMT TID: 140671917557504
+
+[INFO] realtime/$1234/1/realtime.sdp: Push established. Tue, 06 Dec 2016 07:29:40 GMT
+
+[INFO] realtime/$1234/1/realtime.sdp: StopPush MQ sent. Tue, 06 Dec 2016 07:29:40 GMT
+
+************ RECORD LeapMotor Tue, 06 Dec 2016 07:29:40 GMT TID: 140671907067648
+
+************ TEARDO LeapMotor Tue, 06 Dec 2016 07:29:40 GMT TID: 140671896577792
+
+[INFO] realtime/$1234/1/realtime.sdp: Push stopped.

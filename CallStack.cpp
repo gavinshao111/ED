@@ -89,12 +89,12 @@ Initialize(){
 
 DoSetup{
     if (!isPush)
-        RTPSessionOutput * theNewOutput = NEW RTPSessionOutput(inParams->inClientSession, theSession, sServerPrefs, sStreamCookieAttr);
+        RTPSessionOutput * theNewOutput = new RTPSessionOutput(inParams->inClientSession, theSession, sServerPrefs, sStreamCookieAttr);
     theSession->AddOutput(theNewOutput, true);
     (void) QTSS_SetValue(inParams->inClientSession, sOutputAttr, 0, &theNewOutput, sizeof (theNewOutput));
     else
         StrPtrLen theFileName("test.mp4");
-    RTPSessionSaveOutput* theSaveAsMP4 = NEW RTPSessionSaveOutput(theSession, theFileName.Ptr);
+    RTPSessionSaveOutput* theSaveAsMP4 = new RTPSessionSaveOutput(theSession, theFileName.Ptr);
     theSession->AddOutput(theSaveAsMP4, false);}
 
 void RemoveOutput(ReflectorOutput* inOutput, ReflectorSession* inSession, Bool16 killClients) {
