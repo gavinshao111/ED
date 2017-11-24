@@ -114,7 +114,7 @@ public:
 	char*       Ptr;
 	UInt32      Len;
 
-	// convert to a "NEW'd" zero terminated char array
+	// convert to a "new'd" zero terminated char array
 	char*   GetAsCString() const;
 	void    PrintStr();
 	void    PrintStr(char *appendStr);

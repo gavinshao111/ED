@@ -37,7 +37,7 @@
 #include "StrPtrLen.h"
 #include "MyAssert.h"
 #include "OS.h"
-#include "OSMemory.h"
+
 
 
 UInt8 StrPtrLen::sCaseInsensitiveMask[] =
@@ -89,9 +89,9 @@ UInt8 StrPtrLen::sNonPrintChars[] =
 
 char* StrPtrLen::GetAsCString() const
 {
-	// convert to a "NEW'd" zero terminated char array
+	// convert to a "new'd" zero terminated char array
 	// caler is reponsible for the newly allocated memory
-	char *theString = NEW char[Len + 1];
+	char *theString = new char[Len + 1];
 
 	if (Ptr && Len > 0)
 		::memcpy(theString, Ptr, Len);
@@ -182,7 +182,7 @@ char* StrPtrLen::FindStringCase(char* queryCharStr, StrPtrLen* resultStr, Bool16
 
 	if (lastSourceChar != 0) // need to modify for termination. 
 	{
-		editSource = NEW char[Len + 1]; // Ptr could be a static string so make a copy
+		editSource = new char[Len + 1]; // Ptr could be a static string so make a copy
 		::memcpy(editSource, Ptr, Len);
 		editSource[Len] = 0; // this won't work on static strings so we are modifing a new string here
 	}
@@ -580,7 +580,7 @@ void StrPtrLen::AllocateAndCopy(const char *src){
     if (NULL == src || strlen(src) < 1)
         return;
     Len = strlen(src);
-    Ptr = NEW char[Len];
+    Ptr = new char[Len];
     memcpy(Ptr, src, Len);
     //fprintf(stderr, "[DEBUG] StrPtrLen::AllocateAndCopy: %.*s\n\n", Len, Ptr);
 }
@@ -588,7 +588,7 @@ void StrPtrLen::AllocateAndCopy(const StrPtrLen& src){
     if (NULL == src.Ptr || src.Len < 1)
         return;
     Len = src.Len;
-    Ptr = NEW char[Len];
+    Ptr = new char[Len];
     memcpy(Ptr, src.Ptr, Len);
 }
 char* StrPtrLen::FindNextChar(const char& target, const int& offset/*= 0*/) const {
