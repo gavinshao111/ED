@@ -14,6 +14,11 @@
  * case1 车机没有推其他视频，app option timeout，然后后发送stopMQ,然后删除pushInfo实例
  * case2 车机正在推其他视频，基于bug1，当前app option 会立即返回404，不会有app自带超时返回的情况发生。
  * 
+ * bug3: Easydarwin处理app describe和motor setup 线程调度顺序问题
+ * app请求，推流到达后唤醒appOption线程，此时拉流和推流都在option，虽然在拉流处理线程被唤醒后已经usleep(1000 * 500)，
+ * 仍有可能app describe比motor setup早被处理，此时会出现推流到达但是播放失败的尴尬场面
+ * solution: 在RTSPRequestInterface.cpp中发送desc 404的地方调用UnRegisterAndSendMQAndDelete关闭推流。
+ * 
  * req1:
  * 录像拖动：filePath 视频起始播放时间变化，其他不变。比如从0s快进到50s，app option需要等到上一个，即0s
  * 的视频线路结束后再继续发送下一个请求，即50s。
@@ -31,11 +36,37 @@
 
 
 #include "RTSPReqInfo.h"
-#include "DateTranslator.h"
 #include "QTSServerInterface.h"
 #include <sys/time.h>
 
+#include <string>
+#include <chrono>
+#include <ctime>
 #include "mainProcess.h"
+#include "cerr.h"
+
+/**
+ * 打开PUSH_STOP_COMFIRM 开关，即可开启确认推流关闭机制：当发送StopMQ后，起线程等待推流关闭或新的拉流请求，超时则认为推流未关闭（BUG）
+ */
+#ifdef PUSH_STOP_COMFIRM
+#include <map>
+#include <thread>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
+#include <memory>
+#endif
+
+#define TIMEFORMAT "%Y-%m-%d %H:%M:%S"
+using namespace std;
+
+#ifdef PUSH_STOP_COMFIRM
+typedef struct lock {
+    mutex mtx; // 全局互斥锁.
+    condition_variable cv; // 全局条件变量.   
+} lock_t;
+typedef map<string, std::shared_ptr<lock_t>> lock_tbl_t;
+#endif
 
 const char *strClientIdForMQ = "EasyDarwin";
 const char *strMQServerAddress = "ssl://120.26.86.124:8883";
@@ -47,6 +78,12 @@ char *strUserAgentKeyWord = "User-Agent:";
 const int maxPayLoadLen = 2000;
 const int maxTopicLen = 500;
 
+#ifdef PUSH_STOP_COMFIRM
+static lock_tbl_t s_lock_tbl;
+static mutex lock_tbl_mutex;
+#endif
+
+static OSRefTable* s_rtspReqInfoTable = nullptr;
 OSMutex* PushInfo::fMutexForSendMQ = NULL;
 namespace NMSRTSPReqInfo {
     size_t strlcat(char *dst, const char *src, size_t siz);
@@ -54,15 +91,69 @@ namespace NMSRTSPReqInfo {
     bool isDigital(StrPtrLen& src);
 }
 
-void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
-    if (NULL == req.Ptr || req.Len < 1) {
-        fprintf(stderr, "[ERROR] parseAndRegisterAndSendBeginMQAndWait: req invalid.\n\n");
-        return;
+string time_str(const time_t& time) {
+    struct tm* timeTM;
+    char strTime[22] = {0};
+
+    timeTM = localtime(&time);
+    strftime(strTime, sizeof (strTime) - 1, TIMEFORMAT, timeTM);
+    return string(strTime);
+}
+
+string now_str() {
+    return time_str(time(NULL));
+}
+
+#ifdef PUSH_STOP_COMFIRM
+shared_ptr<lock_t> get_lock(const string& key) {
+    unique_lock<mutex> lk(lock_tbl_mutex);
+    lock_tbl_t::iterator it;
+    if (s_lock_tbl.end() == (it = s_lock_tbl.find(key))) {
+        shared_ptr<lock_t> lock = make_shared<lock_t>();
+        return s_lock_tbl.insert(pair<string, shared_ptr < lock_t >> (key, lock)).first->second;
     }
-    DateBuffer theDate;
-    OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
-    if (NULL == rtspReqInfoTable) {
-        fprintf(stderr, "[ERROR] UnRegisterAndSendMQAndDelete: rtspReqInfoTable == NULL.\n\n");
+
+    return it->second;
+}
+
+bool wait(const string& vehicle, const size_t& second) {
+    shared_ptr<lock_t> lock = get_lock(vehicle);
+    unique_lock<mutex> lk(lock->mtx);
+    return lock->cv.wait_for(lk, chrono::seconds(second)) == cv_status::timeout;
+}
+
+void notify(const string& vehicle) {
+    shared_ptr<lock_t> lock = get_lock(vehicle);
+    unique_lock<mutex> lk(lock->mtx);
+    lock->cv.notify_all();
+    cerr << "[DEBUG] " << vehicle << " notified " << now_str() << "\n\n";
+}
+
+void notify(const char* vehicle) {
+    notify(string(vehicle));
+}
+
+void notify(const StrPtrLen& vehicle) {
+    notify(string(vehicle.Ptr, vehicle.Len));
+}
+
+void listen_push_status(const string& vehicle) {
+    cerr << "[DEBUG] new thread start to wait for " << vehicle << " stop " << now_str() << "\n\n";
+    if (wait(vehicle, 10)) {
+        cerr << "[ERROR] " << vehicle << ": stop MQ sent but vehicle didn't stop pushing "
+                << now_str() << "\n\n";
+    } else
+        cerr << "[DEBUG] " << vehicle << ": stop push successful " << now_str() << "\n\n";
+}
+#endif
+
+// parseAndRegisterAndSendBeginMQAndWait
+void on_rtsp_request(const StrPtrLen& req) {
+    if (!s_rtspReqInfoTable)
+        s_rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
+
+    if (NULL == req.Ptr || req.Len < 1) {
+        fprintf(stderr, "[ERROR] %s: req invalid.\n\n", __func__);
         return;
     }
 
@@ -79,98 +170,106 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
     /* the thread deal app option and deal motor setup is the same one, so block app option until motor setup is not work
      */
     bool MotorOption = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
-    bool MotorAnnounce = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == announce;
+//    bool MotorAnnounce = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == announce;
     bool AppOption = !rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == option;
     bool MotorTeardown = rtspReqInfo.isFromLeapMotor && rtspReqInfo.RTSPType == teardown;
 
     if (MotorOption || AppOption || MotorTeardown) {
 
-        pushInfoRef = rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        pushInfoRef = s_rtspReqInfoTable->Resolve(&rtspReqInfo.vehicleId);
+        
         if (NULL == pushInfoRef) { // 当前车机没有在推流，且在这之前没有其他app在等待当前车机播放
             if (MotorTeardown)
                 return;
             if (MotorOption) {
                 fprintf(stderr, "[WARN] %.*s: MotorOption arrived, but there's no app wait for push. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
             }
             pushInfo = new PushInfo();
             if (!pushInfo->parsePushInfo(rtspReqInfo.fullUrl)) {
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                
                 fprintf(stderr, "[ERROR] %.*s: pushInfo->parsePushInfo fail. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 return;
             }
 
             pushInfo->readyToAddToTable();
-            if (OS_NoErr != rtspReqInfoTable->Register(pushInfo->GetRef())) {
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+            if (OS_NoErr != s_rtspReqInfoTable->Register(pushInfo->GetRef())) {
+                
                 fprintf(stderr, "[ERROR] %.*s: Register fail. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
                 delete pushInfo;
                 return;
             }
-            DateTranslator::UpdateDateBuffer(&theDate, 0);
+            
             fprintf(stderr, "[INFO] %.*s: PushInfo allocated & registered. %s TID: %lu\n\n",
-                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
 
         } else { // 推流信息已存在 may another app with same url is waiting, may push has arrived.
             pushInfo = (PushInfo*) pushInfoRef->GetObject();
             if (AppOption) {
                 fprintf(stderr, "[DEBUG] %.*s: PushInfo is existing. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
             } else if (MotorTeardown) { // 一般都会在发送stop mq以后删除pushInfo，所以到这里说明是车机主动断开
 
-                rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
+                s_rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
                 delete pushInfo;
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                
                 fprintf(stderr, "[INFO] %.*s: vehicle teardown by it self, pushInfo unregistered and deleted. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
                 return;
             }
         }
 
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        
         if (MotorOption) {
             pushInfo->isPushArrived = true;
             fprintf(stderr, "[DEBUG] %.*s: pushInfo->isPushArrived set true, notifyAppThread wake up. %s TID: %lu\n\n",
-                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    pushInfo->filePath.Len, pushInfo->filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
             pushInfo->notifyApp();
         } else if (!pushInfo->isPushArrived) { // app option && push hasn't arrived
             if (NULL == pushInfoRef) { // 未注册才发送BeginMQ
                 pushInfo->sendBeginOrStopMq(true);
+#ifdef PUSH_STOP_COMFIRM
+                notify(string(rtspReqInfo.vehicleId.Ptr, rtspReqInfo.vehicleId.Len));
+#endif
                 fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & hasn't registered, begin MQ sent. %s TID: %lu\n\n",
-                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        pushInfo->filePath.Len, pushInfo->filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
             } else // 已注册但推流未到达时不再发送BeginMQ
-                fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & registered. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                fprintf(stderr, "[DEBUG] %.*s: AppOption & Push hasn't Arrived & registered. %s TID: %lu\n\n", pushInfo->filePath.Len, pushInfo->filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
 
             if (pushInfo->waitForNotification(CTimeToWaitForPushArvd)) {
                 usleep(1000 * 500); // at this time, motor and app are all in option, we delay app to let motor setup first.
             } else {
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                
 
                 /*
                  * for bug2, 因为如果app自带超时提前返回，不会进入desc404的流程，所以需要在这里就释放资源；
                  * 若app不提前返回，在这里资源被释放，在进入desc404后，发现这个filePath未被注册，do nothing
                  */
                 fprintf(stderr, "[INFO] %.*s: Wait for push timeout(%ds). %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, CTimeToWaitForPushArvd, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, CTimeToWaitForPushArvd, now_str().c_str(), OSThread::GetCurrentThreadID());
                 // in case that 2 apps wait for a same url push but timeout, first one call UnRegister the url and another call again, Resolve will fail.                    
-                if (NULL == rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) {
+                if (NULL == s_rtspReqInfoTable->ResolveAndUnRegister(&rtspReqInfo.vehicleId)) {
                     fprintf(stderr, "[INFO] %.*s: PushInfo already deleted, nothing to do. %s TID: %lu\n\n",
-                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                            rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
                     return;
                 }
                 pushInfo->sendBeginOrStopMq(false);
+
+#ifdef PUSH_STOP_COMFIRM
+                thread t(listen_push_status, string(rtspReqInfo.vehicleId.Ptr, rtspReqInfo.vehicleId.Len));
+                t.detach();
+#endif
                 delete pushInfo;
-                DateTranslator::UpdateDateBuffer(&theDate, 0);
+                
                 fprintf(stderr, "[INFO] %.*s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
-                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                        rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
             }
         } else { // AppOption && PushArrived
             fprintf(stderr, "[DEBUG] %.*s: AppOption & PushArrived, app option thread will continue. %s TID: %lu\n\n",
-                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                    rtspReqInfo.filePath.Len, rtspReqInfo.filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
         }
     }
 
@@ -182,61 +281,47 @@ void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req) {
  * @param call_from_describe
  */
 void UnRegisterAndSendMQAndDelete(char *key, bool call_from_describe/* = false*/) {
-    DateBuffer theDate;
 
-    OSRefTable* rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
-    if (NULL == rtspReqInfoTable) {
-        fprintf(stderr, "[ERROR] UnRegisterAndSendMQAndDelete: rtspReqInfoTable == NULL.\n\n");
-        return;
-    }
+    if (!s_rtspReqInfoTable)
+        s_rtspReqInfoTable = QTSServerInterface::GetServer()->GetRTSPReqInfoMap();
 
     StrPtrLen fullFileName(key);
     StrPtrLen vehicleId;
     vehicleId.Ptr = fullFileName.FindNextChar('/') + 1;
     vehicleId.Len = fullFileName.FindNextChar('/', vehicleId.Ptr) - vehicleId.Ptr;
     PushInfo* pushInfo;
-    OSRef* pushInfoRef = rtspReqInfoTable->Resolve(&vehicleId);
+    OSRef* pushInfoRef = s_rtspReqInfoTable->Resolve(&vehicleId);
+    
     if (NULL == pushInfoRef) {
-        if (call_from_describe) {
-            DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[INFO] %s: pushInfo hasn't registered, may released already. %s TID: %lu\n\n", key, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            return;
-        }
-        // 若出现未知bug，rtspReqInfoTable中pushInfo被删除，但是车机仍在推，在QTSSReflectorModule或ReflectorSession中调用此函数，强行构造PushInfo,发送stopMQ
         
-        pushInfo = new PushInfo();
-        char* cPathWithPrefix = new char[30 + fullFileName.Len];
-        sprintf(cPathWithPrefix, "rtsp://120.26.86.124:8888/%s", key);
-        StrPtrLen src(cPathWithPrefix);
-        if (!pushInfo->parsePushInfo(src)) {
-            DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[ERROR] %s: pushInfo->parsePushInfo fail. %s TID: %lu\n\n",
-                    cPathWithPrefix, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-            delete pushInfo;
-            delete cPathWithPrefix;
-            return;
-        }
-        delete cPathWithPrefix;
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[WARN] %s: in some bug case, pushInfo not existed in rtspReqInfoTable but vehicle is staill pushing, forcibly new an instance to send stopMQ. %s TID: %lu\n\n", 
-                key, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
-    } else
-        pushInfo = (PushInfo*) pushInfoRef->GetObject();
-
-    // for bug1
-    if (!pushInfo->filePath.Equal(fullFileName)) {
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[DEBUG] %s: This vehicle is pushing another url: %.*s. Nothing to do. %s TID: %lu\n\n",
-                key, pushInfo->filePath.Len, pushInfo->filePath.Ptr, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+        /**
+         * 在ReflectorSession.cpp中检测到没有app在拉此推流时和发送desc 404(app请求超时、app请求时，车机在推另一路视频、bug3)
+         * 时会调用此函数，以上情况pushInfo都应该还在
+         * 播放中车机先断开连接，此时pushInfo已经被删除
+         */
+        fprintf(stderr, "[INFO] %s: pushInfo hasn't registered when try to UnRegister. %s TID: %lu\n\n", key, now_str().c_str(), OSThread::GetCurrentThreadID());
         return;
     }
-    if (pushInfoRef != NULL)
-        rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
+    pushInfo = (PushInfo*) pushInfoRef->GetObject();
+
+    // for bug1
+    if (call_from_describe && !pushInfo->filePath.Equal(fullFileName)) {
+        
+        fprintf(stderr, "[DEBUG] %s: This vehicle is pushing another url: %.*s. Nothing to do. %s TID: %lu\n\n",
+                key, pushInfo->filePath.Len, pushInfo->filePath.Ptr, now_str().c_str(), OSThread::GetCurrentThreadID());
+        return;
+    }
+    s_rtspReqInfoTable->UnRegister(pushInfoRef, 0xffffffff);
     pushInfo->sendBeginOrStopMq(false);
+
+#ifdef PUSH_STOP_COMFIRM
+    thread t(listen_push_status, string(vehicleId.Ptr, vehicleId.Len));
+    t.detach();
+#endif
     delete pushInfo;
-    DateTranslator::UpdateDateBuffer(&theDate, 0);
+    
     fprintf(stderr, "[DEBUG] %s: PushInfo unregistered and deleted, stop MQ sent. %s TID: %lu\n\n",
-            key, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            key, now_str().c_str(), OSThread::GetCurrentThreadID());
 }
 
 /*
@@ -358,9 +443,9 @@ void RTSPReqInfo::parseReqAndPrint(void) {
         isFromLeapMotor = (0 == strncmp(pos, strCarUserAgentValue, strlen(strCarUserAgentValue)));
 
         DateBuffer theDate;
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
+        
         fprintf(stderr, "************ %.6s %.9s %s TID: %lu\n\n",
-                completeRequest.Ptr, pos, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+                completeRequest.Ptr, pos, now_str().c_str(), OSThread::GetCurrentThreadID());
         return;
     } while (false);
     RTSPType = invaild;

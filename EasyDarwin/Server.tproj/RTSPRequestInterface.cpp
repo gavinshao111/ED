@@ -28,10 +28,6 @@
         Contains:   Implementation of class defined in RTSPRequestInterface.h
 
 
- *     Gavin's change:
- *     when ED send DESC:404, it will call RTSPRequestInterface::WriteStandardHeaders
- *     generate url and call StopPushMQ and cleanCV
-
  */
 
 
@@ -46,20 +42,12 @@
 #include "RTSPRequestStream.h"
 
 #include "StringParser.h"
-#include "OSMemory.h"
+
 #include "OSThread.h"
 #include "DateTranslator.h"
 #include "QTSSDataConverter.h"
 #include "OSArrayObjectDeleter.h"
 #include "QTSServerInterface.h"
-
-#if 0
-#include "mainProcess.h"
-#include "cCondVB.h"
-extern const int timeOutForSendMQ;
-#endif
-
-
 #include "RTSPReqInfo.h"
 
 char RTSPRequestInterface::sPremadeHeader[kStaticHeaderSizeInBytes];
@@ -620,11 +608,11 @@ void RTSPRequestInterface::WriteStandardHeaders() {
         }
         AppendHeader(qtssCSeqHeader, fHeaderDictionary.GetValue(qtssCSeqHeader));
 
-        // if car has not push before APP request timeout, send a StopMQ to car anyway.
+        /**
+         * 当app请求超时、app请求时，车机在推另一路视频、bug3时会来到这里
+         */
         if (fStatus == qtssClientNotFound) {
-            DateBuffer theDate;
-            DateTranslator::UpdateDateBuffer(&theDate, 0);
-            fprintf(stderr, "[INFO] %s: DESC 404, app disconnect. %s TID: %lu\n\n", fFilePath+1, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+            fprintf(stderr, "[INFO] %s: DESCRIBE 404, app disconnect. %s TID: %lu\n\n", fFilePath+1, now_str().c_str(), OSThread::GetCurrentThreadID());
             UnRegisterAndSendMQAndDelete(fFilePath+1, true);
             
         }
@@ -805,7 +793,7 @@ void* RTSPRequestInterface::GetLocalPath(QTSSDictionary* inRequest, UInt32* outL
     OS::RecursiveMakeDir(rootDir);
 
     UInt32 fullPathLen = filePath.Len + theRootDir->Len;
-    char* theFullPath = NEW char[fullPathLen + 1];
+    char* theFullPath = new char[fullPathLen + 1];
     theFullPath[fullPathLen] = '\0';
 
     ::memcpy(theFullPath, theRootDir->Ptr, theRootDir->Len);

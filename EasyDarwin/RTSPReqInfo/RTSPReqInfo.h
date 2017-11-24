@@ -6,7 +6,7 @@
 #include "OSRef.h"
 #include "OSMutex.h"
 #include "OSCond.h"
-
+#include <string>
 /*
  * RTSP req without fullFileName will be set to invaild, like OPTION rtsp://120.27.188.84:8888 RTSP/1.0\r\n CSeq: 17\r\n
  */
@@ -15,8 +15,10 @@ enum enumRTSPType {
 };
 
 void UnRegisterAndSendMQAndDelete(char *key, bool call_from_describe = false);
-void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
-
+void on_rtsp_request(const StrPtrLen& req);
+void notify(const char* vehicle);
+void notify(const StrPtrLen& vehicle);
+std::string now_str();
 class PushInfo;
 
 class RTSPReqInfo {
@@ -149,7 +151,7 @@ private:
 
 
     friend class RTSPReqInfo;
-    friend void parseAndRegisterAndSendBeginMQAndWait(const StrPtrLen& req);
+    friend void on_rtsp_request(const StrPtrLen& req);
 };
 
 

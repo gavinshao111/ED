@@ -34,7 +34,7 @@
 #include "ReflectorSession.h"
 #include "SocketUtils.h"
 
-#include "OSMemory.h"
+
 #include "OS.h"
 #include "atomic.h"
 
@@ -64,7 +64,7 @@ extern char ServerIP[20];
 FileDeleter::FileDeleter(StrPtrLen* inSDPPath) {
     Assert(inSDPPath);
     fFilePath.Len = inSDPPath->Len;
-    fFilePath.Ptr = NEW char[inSDPPath->Len + 1];
+    fFilePath.Ptr = new char[inSDPPath->Len + 1];
     Assert(fFilePath.Ptr);
     memcpy(fFilePath.Ptr, inSDPPath->Ptr, inSDPPath->Len);
     fFilePath.Ptr[inSDPPath->Len] = 0;
@@ -101,7 +101,7 @@ fStreamName(NULL) {
 
     fQueueElem.SetEnclosingObject(this);
     if (inSourceID != NULL) {
-        fSourceID.Ptr = NEW char[inSourceID->Len + 1];
+        fSourceID.Ptr = new char[inSourceID->Len + 1];
         ::memcpy(fSourceID.Ptr, inSourceID->Ptr, inSourceID->Len);
         fSourceID.Ptr[inSourceID->Len] = '\0';
         fSourceID.Len = inSourceID->Len;
@@ -164,7 +164,7 @@ QTSS_Error ReflectorSession::SetSessionName() {
 
         parser.Expect('\\');
         parser.ConsumeUntil(&strName, '\.');
-        fSessionName = NEW char[strName.Len + 1];
+        fSessionName = new char[strName.Len + 1];
         ::memcpy(fSessionName, strName.Ptr, strName.Len);
         fSessionName[strName.Len] = '\0';
 
@@ -242,11 +242,11 @@ QTSS_Error ReflectorSession::SetupReflectorSession(SourceInfo* inInfo, QTSS_Stan
         delete fStreamArray; // keep the array list synchronized with the source info.
     }
 
-    fStreamArray = NEW ReflectorStream*[fSourceInfo->GetNumStreams()];
+    fStreamArray = new ReflectorStream*[fSourceInfo->GetNumStreams()];
     ::memset(fStreamArray, 0, fSourceInfo->GetNumStreams() * sizeof (ReflectorStream*));
 
     for (UInt32 x = 0; x < fSourceInfo->GetNumStreams(); x++) {
-        fStreamArray[x] = NEW ReflectorStream(fSourceInfo->GetStreamInfo(x));
+        fStreamArray[x] = new ReflectorStream(fSourceInfo->GetStreamInfo(x));
         // Obviously, we may encounter an error binding the reflector sockets.
         // If that happens, we'll just abort here, which will leave the ReflectorStream
         // array in an inconsistent state, so we need to make sure in our cleanup
@@ -383,13 +383,11 @@ void ReflectorSession::RemoveOutput(ReflectorOutput* inOutput, Bool16 isClient) 
 
         // fStreamName is like "realtime/$1234/1/realtime"
         // we need splice tobe realtime/$1234/1/realtim.sdp    
-        DateBuffer theDate;
         int lenOffStreamName = strlen(fStreamName);
         char* cFullFileName = new char[5 + lenOffStreamName];
         sprintf(cFullFileName, "%s.sdp", fStreamName);
         *(cFullFileName + 5 + lenOffStreamName - 1) = 0;
-        DateTranslator::UpdateDateBuffer(&theDate, 0);
-        fprintf(stderr, "[INFO] %s: ReflectorSession::%s: fNumOutputs == 0. %s TID: %lu\n\n", cFullFileName, __func__, theDate.GetDateBuffer(), OSThread::GetCurrentThreadID());
+        fprintf(stderr, "[INFO] %s: ReflectorSession::%s: fNumOutputs == 0. %s TID: %lu\n\n", cFullFileName, __func__, now_str().c_str(), OSThread::GetCurrentThreadID());
         UnRegisterAndSendMQAndDelete(cFullFileName);
         delete cFullFileName;
     }

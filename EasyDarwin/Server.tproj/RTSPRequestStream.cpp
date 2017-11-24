@@ -34,7 +34,7 @@
 
 #include "RTSPRequestStream.h"
 #include "StringParser.h"
-#include "OSMemory.h"
+
 #include "base64.h"
 #include "OS.h"
 
@@ -282,7 +282,7 @@ QTSS_Error RTSPRequestStream::ReadRequest() {
             }
 #endif
 
-            parseAndRegisterAndSendBeginMQAndWait(fRequest);
+            on_rtsp_request(fRequest);
 
         }
 
@@ -388,7 +388,7 @@ QTSS_Error RTSPRequestStream::DecodeIncomingData(char* inSrcData, UInt32 inSrcDa
     Assert(fRetreatBytes == 0);
 
     if (fRequest.Ptr == &fRequestBuffer[0]) {
-        fRequest.Ptr = NEW char[kRequestBufferSizeInBytes];
+        fRequest.Ptr = new char[kRequestBufferSizeInBytes];
         fRequest.Len = 0;
     }
 

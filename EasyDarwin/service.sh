@@ -86,4 +86,4 @@ esac
 # add task of restart service daily on 2:00 to crontab: 
 # crontab -e
 # then input:
-# * 2 * * * service easydarwin restart
+# 0 2 * * * service easydarwin restart

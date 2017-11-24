@@ -45,7 +45,7 @@
 
 #include "QTSServer.h"
 
-#include "OSMemory.h"
+
 #include "OSArrayObjectDeleter.h"
 #include "SocketUtils.h"
 #include "TCPListenerSocket.h"
@@ -411,7 +411,7 @@ Bool16 QTSServer::CreateListeners(Bool16 startListeningNow, QTSServerPrefs* inPr
 	if (inPortOverride != 0)
 	{
 		theTotalRTSPPortTrackers = theNumAddrs; // one port tracking struct for each IP addr
-		theRTSPPortTrackers = NEW PortTracking[theTotalRTSPPortTrackers];
+		theRTSPPortTrackers = new PortTracking[theTotalRTSPPortTrackers];
 		for (index = 0; index < theNumAddrs; index++)
 		{
 			theRTSPPortTrackers[index].fPort = inPortOverride;
@@ -423,7 +423,7 @@ Bool16 QTSServer::CreateListeners(Bool16 startListeningNow, QTSServerPrefs* inPr
 		UInt32 theNumPorts = 0;
 		UInt16* thePorts = GetRTSPPorts(inPrefs, &theNumPorts);
 		theTotalRTSPPortTrackers = theNumAddrs * theNumPorts;
-		theRTSPPortTrackers = NEW PortTracking[theTotalRTSPPortTrackers];
+		theRTSPPortTrackers = new PortTracking[theTotalRTSPPortTrackers];
 
 		UInt32 currentIndex = 0;
 
@@ -444,7 +444,7 @@ Bool16 QTSServer::CreateListeners(Bool16 startListeningNow, QTSServerPrefs* inPr
 	// Stat Total Num of HTTP Port
 	{
 		theTotalHTTPPortTrackers = theNumAddrs;
-		theHTTPPortTrackers = NEW PortTracking[theTotalHTTPPortTrackers];
+		theHTTPPortTrackers = new PortTracking[theTotalHTTPPortTrackers];
 
 		UInt16 theHTTPPort = inPrefs->GetHTTPServicePort();
 		UInt32 currentIndex = 0;
@@ -461,7 +461,7 @@ Bool16 QTSServer::CreateListeners(Bool16 startListeningNow, QTSServerPrefs* inPr
 	// Now figure out which of these ports we are *already* listening on.
 	// If we already are listening on that port, just move the pointer to the
 	// listener over to the new array
-	TCPListenerSocket** newListenerArray = NEW TCPListenerSocket*[theTotalRTSPPortTrackers + theTotalHTTPPortTrackers];
+	TCPListenerSocket** newListenerArray = new TCPListenerSocket*[theTotalRTSPPortTrackers + theTotalHTTPPortTrackers];
 	UInt32 curPortIndex = 0;
 
 	// RTSPPortTrackers check
@@ -501,7 +501,7 @@ Bool16 QTSServer::CreateListeners(Bool16 startListeningNow, QTSServerPrefs* inPr
 	{
 		if (theRTSPPortTrackers[count3].fNeedsCreating)
 		{
-			newListenerArray[curPortIndex] = NEW RTSPListenerSocket();
+			newListenerArray[curPortIndex] = new RTSPListenerSocket();
 			QTSS_Error err = newListenerArray[curPortIndex]->Initialize(theRTSPPortTrackers[count3].fIPAddr, theRTSPPortTrackers[count3].fPort);
 
 			char thePortStr[20];
@@ -534,7 +534,7 @@ Bool16 QTSServer::CreateListeners(Bool16 startListeningNow, QTSServerPrefs* inPr
 	{
 		if (theHTTPPortTrackers[count3].fNeedsCreating)
 		{
-			newListenerArray[curPortIndex] = NEW HTTPListenerSocket();
+			newListenerArray[curPortIndex] = new HTTPListenerSocket();
 			QTSS_Error err = newListenerArray[curPortIndex]->Initialize(theHTTPPortTrackers[count3].fIPAddr, theHTTPPortTrackers[count3].fPort);
 
 			char thePortStr[20];
@@ -608,12 +608,12 @@ UInt32* QTSServer::GetRTSPIPAddrs(QTSServerPrefs* inPrefs, UInt32* outNumAddrsPt
 	if (numAddrs == 0)
 	{
 		*outNumAddrsPtr = 1;
-		theIPAddrArray = NEW UInt32[1];
+		theIPAddrArray = new UInt32[1];
 		theIPAddrArray[0] = INADDR_ANY;
 	}
 	else
 	{
-		theIPAddrArray = NEW UInt32[numAddrs + 1];
+		theIPAddrArray = new UInt32[numAddrs + 1];
 		UInt32 arrIndex = 0;
 
 		for (UInt32 theIndex = 0; theIndex < numAddrs; theIndex++)
@@ -659,7 +659,7 @@ UInt16* QTSServer::GetRTSPPorts(QTSServerPrefs* inPrefs, UInt32* outNumPortsPtr)
 	if (*outNumPortsPtr == 0)
 		return NULL;
 
-	UInt16* thePortArray = NEW UInt16[*outNumPortsPtr];
+	UInt16* thePortArray = new UInt16[*outNumPortsPtr];
 
 	for (UInt32 theIndex = 0; theIndex < *outNumPortsPtr; theIndex++)
 	{
@@ -922,7 +922,7 @@ void QTSServer::LoadModules(QTSServerPrefs* inPrefs)
 
 #ifdef __Win32__
 	// NT doesn't seem to have support for the POSIX directory parsing APIs.
-	OSCharArrayDeleter theLargeModDirName(NEW char[::strlen(theModDirName.GetObject()) + 3]);
+	OSCharArrayDeleter theLargeModDirName(new char[::strlen(theModDirName.GetObject()) + 3]);
 	::strcpy(theLargeModDirName.GetObject(), theModDirName.GetObject());
 	::strcat(theLargeModDirName.GetObject(), "\\*");
 
@@ -989,14 +989,14 @@ void    QTSServer::CreateModule(char* inModuleFolderPath, char* inModuleName)
 	//
 	// Construct a full path to this module
 	UInt32 totPathLen = ::strlen(inModuleFolderPath) + ::strlen(inModuleName);
-	OSCharArrayDeleter theModPath(NEW char[totPathLen + 4]);
+	OSCharArrayDeleter theModPath(new char[totPathLen + 4]);
 	::strcpy(theModPath.GetObject(), inModuleFolderPath);
 	::strcat(theModPath.GetObject(), kPathDelimiterString);
 	::strcat(theModPath.GetObject(), inModuleName);
 
 	//
 	// Construct a QTSSModule object, and attempt to initialize the module
-	QTSSModule* theNewModule = NEW QTSSModule(inModuleName, theModPath.GetObject());
+	QTSSModule* theNewModule = new QTSSModule(inModuleName, theModPath.GetObject());
 	QTSS_Error theErr = theNewModule->SetupModule(&sCallbacks);
 
 	if (theErr != QTSS_NoErr)
@@ -1054,7 +1054,7 @@ Bool16 QTSServer::AddModule(QTSSModule* inModule)
 
 	//
 	// Give the module object a prefs dictionary. Instance attributes are allowed for these objects.
-	QTSSPrefs* thePrefs = NEW QTSSPrefs(sPrefsSource, inModule->GetValue(qtssModName), QTSSDictionaryMap::GetMap(QTSSDictionaryMap::kModulePrefsDictIndex), true);
+	QTSSPrefs* thePrefs = new QTSSPrefs(sPrefsSource, inModule->GetValue(qtssModName), QTSSDictionaryMap::GetMap(QTSSDictionaryMap::kModulePrefsDictIndex), true);
 	thePrefs->RereadPreferences();
 	inModule->SetPrefsDict(thePrefs);
 
@@ -1214,7 +1214,7 @@ Task*   RTSPListenerSocket::GetSessionTask(TCPSocket** outSocket)
 	// so that it can direct the "POST" half of the connection to the same machine when tunnelling RTSP thru HTTP
 	Bool16  doReportHTTPConnectionAddress = QTSServerInterface::GetServer()->GetPrefs()->GetDoReportHTTPConnectionAddress();
 
-	RTSPSession* theTask = NEW RTSPSession(doReportHTTPConnectionAddress);
+	RTSPSession* theTask = new RTSPSession(doReportHTTPConnectionAddress);
 	*outSocket = theTask->GetSocket();  // out socket is not attached to a unix socket yet.
 
 	if (this->OverMaxConnections(0))
@@ -1251,7 +1251,7 @@ Task*   HTTPListenerSocket::GetSessionTask(TCPSocket** outSocket)
 {
 	Assert(outSocket != NULL);
 
-	HTTPSession* theTask = NEW HTTPSession();
+	HTTPSession* theTask = new HTTPSession();
 	*outSocket = theTask->GetSocket();  // out socket is not attached to a unix socket yet.
 
 	if (this->OverMaxConnections(0))
@@ -1293,9 +1293,9 @@ UDPSocketPair*  RTPSocketPool::ConstructUDPSocketPair()
 	//necessary), and one for RTCP data (incoming, so definitely need a demuxer).
 	//These are nonblocking sockets that DON'T receive events (we are going to poll for data)
 	// They do receive events - we don't poll from them anymore
-	return NEW
-		UDPSocketPair(NEW UDPSocket(theTask, Socket::kNonBlockingSocketType),
-			NEW UDPSocket(theTask, UDPSocket::kWantsDemuxer | Socket::kNonBlockingSocketType));
+	return new
+		UDPSocketPair(new UDPSocket(theTask, Socket::kNonBlockingSocketType),
+			new UDPSocket(theTask, UDPSocket::kWantsDemuxer | Socket::kNonBlockingSocketType));
 }
 
 void RTPSocketPool::DestructUDPSocketPair(UDPSocketPair* inPair)
